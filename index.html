@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salary2045 — Rebalancer</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --panel: #111118;
+    --border: #1e1e2e;
+    --gold: #c9a84c;
+    --gold-dim: #7a6030;
+    --green: #2ecc71;
+    --red: #e74c3c;
+    --blue: #3b82f6;
+    --purple: #a78bfa;
+    --cash: #9ca3af;
+    --text: #e8e8f0;
+    --muted: #5a5a7a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(201,168,76,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(201,168,76,0.04) 0%, transparent 60%);
+  }
+
+  header { text-align: center; margin-bottom: 32px; }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(42px, 8vw, 72px);
+    letter-spacing: 6px;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .subtitle {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  .divider { width: 60px; height: 1px; background: var(--gold-dim); margin: 16px auto; }
+
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .panel-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  input[type="number"], input[type="text"] {
+    width: 100%;
+    background: #0d0d14;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--gold);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 9px 11px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus { border-color: var(--gold-dim); }
+  input[type="text"] { color: var(--text); }
+
+  .cash-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  @media (max-width: 600px) { .cash-row { grid-template-columns: 1fr; } }
+
+  button {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s;
+    border: 1px solid var(--gold-dim);
+    background: rgba(201,168,76,0.08);
+    color: var(--gold);
+    padding: 10px 16px;
+  }
+  button:hover { background: rgba(201,168,76,0.18); }
+  button.ghost { border-color: var(--border); background: transparent; color: var(--muted); }
+  button.ghost:hover { color: var(--text); border-color: var(--gold-dim); }
+  button.small { padding: 5px 10px; font-size: 9px; }
+  button.danger { border-color: rgba(231,76,60,0.4); color: var(--red); background: transparent; }
+  button.danger:hover { background: rgba(231,76,60,0.12); }
+
+  table { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+  th {
+    background: #0d0d14; color: var(--muted); font-size: 9px; letter-spacing: 2px;
+    text-transform: uppercase; padding: 8px 8px; text-align: right; border-bottom: 1px solid var(--border);
+  }
+  th:first-child, th:nth-child(2) { text-align: left; }
+  td { padding: 6px 8px; text-align: right; border-bottom: 1px solid #13131a; }
+  td:first-child, td:nth-child(2) { text-align: left; }
+  tr:last-child td { border-bottom: none; }
+  td input { font-size: 13px; padding: 6px 8px; }
+
+  .sleeve-tag {
+    display: inline-block; font-size: 9px; letter-spacing: 1px; padding: 2px 7px;
+    border-radius: 2px; text-transform: uppercase;
+  }
+  .tag-core   { background: rgba(59,130,246,0.12); color: var(--blue); border: 1px solid rgba(59,130,246,0.3); }
+  .tag-sat    { background: rgba(201,168,76,0.12); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
+  .tag-conv   { background: rgba(167,139,250,0.12); color: var(--purple); border: 1px solid rgba(167,139,250,0.3); }
+  .tag-hedge  { background: rgba(46,204,113,0.12); color: var(--green); border: 1px solid rgba(46,204,113,0.3); }
+  .tag-cash   { background: rgba(156,163,175,0.12); color: var(--cash); border: 1px solid rgba(156,163,175,0.3); }
+
+  select {
+    background: #0d0d14; border: 1px solid var(--border); border-radius: 3px;
+    color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+    padding: 6px 8px; outline: none; cursor: pointer; width: 100%;
+  }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat { background: #0d0d14; border: 1px solid var(--border); border-radius: 4px; padding: 16px; }
+  .stat.highlight { border-color: var(--gold-dim); background: rgba(201,168,76,0.04); }
+  .stat-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+  .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: var(--gold); letter-spacing: 1px; line-height: 1; }
+  .stat-value.green { color: var(--green); }
+
+  .sleeve-bar-wrap { margin-bottom: 14px; }
+  .sleeve-bar-head { display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 11px; margin-bottom: 5px; }
+  .sleeve-bar-head .name { color: var(--text); }
+  .sleeve-bar-head .pct { color: var(--muted); }
+  .bar-track { height: 8px; background: #0d0d14; border-radius: 4px; overflow: hidden; position: relative; border: 1px solid var(--border); }
+  .bar-current { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+  .bar-target-marker { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--text); opacity: 0.6; }
+
+  .alloc-core { background: var(--blue); }
+  .alloc-sat { background: var(--gold); }
+  .alloc-conv { background: var(--purple); }
+  .alloc-hedge { background: var(--green); }
+  .alloc-cash { background: var(--cash); }
+
+  .note {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted);
+    line-height: 1.7; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);
+  }
+  .note span { color: var(--gold-dim); }
+
+  .buy-amt { color: var(--green); font-weight: 600; }
+  .zero-amt { color: var(--muted); }
+
+  .target-warn { color: var(--red); font-family: 'IBM Plex Mono', monospace; font-size: 11px; margin-top: 10px; }
+  .api-note { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+  .controls-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .api-status { font-family: 'IBM Plex Mono', monospace; font-size: 10px; margin-top: 8px; min-height: 14px; }
+  .api-grid { display: grid; grid-template-columns: 160px 1fr; gap: 10px; align-items: end; }
+  @media (max-width: 600px) { .api-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SALARY 2045</h1>
+  <div class="subtitle">Portfolio Rebalancer — Buy-Only</div>
+  <div class="divider"></div>
+</header>
+
+<div class="container">
+
+  <!-- TARGET ALLOCATION -->
+  <div class="panel">
+    <div class="panel-title">// Target Allocation (Sleeves)</div>
+    <table>
+      <thead>
+        <tr><th>Sleeve</th><th>Target %</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="sleeve-tag tag-core">Core</span></td><td><input type="number" id="t-core" value="40" min="0" max="100" step="0.5"></td></tr>
+        <tr><td><span class="sleeve-tag tag-sat">Satellite</span></td><td><input type="number" id="t-sat" value="38" min="0" max="100" step="0.5"></td></tr>
+        <tr><td><span class="sleeve-tag tag-conv">High Conviction</span></td><td><input type="number" id="t-conv" value="10" min="0" max="100" step="0.5"></td></tr>
+        <tr><td><span class="sleeve-tag tag-hedge">Hedge</span></td><td><input type="number" id="t-hedge" value="7" min="0" max="100" step="0.5"></td></tr>
+        <tr><td><span class="sleeve-tag tag-cash">Cash</span></td><td><input type="number" id="t-cash" value="5" min="0" max="100" step="0.5"></td></tr>
+      </tbody>
+    </table>
+    <div class="target-warn" id="target-warn"></div>
+  </div>
+
+  <!-- CASH + API -->
+  <div class="panel">
+    <div class="panel-title">// Cash</div>
+    <div class="cash-row">
+      <div>
+        <label>Available Cash to Deploy ($)</label>
+        <input type="number" id="cash" value="2000" min="0" step="100">
+        <div class="api-note">New money you're adding now. This gets allocated into positions.</div>
+      </div>
+      <div>
+        <label>Existing Cash Position ($)</label>
+        <input type="number" id="existing-cash" value="500" min="0" step="100">
+        <div class="api-note">Cash already sitting in your account. Counts toward the Cash sleeve target.</div>
+      </div>
+    </div>
+
+    <div class="panel-title" style="margin-top:24px;">// Live Prices (Optional)</div>
+    <div class="api-grid">
+      <div>
+        <label>Provider</label>
+        <select id="provider">
+          <option value="finnhub">Finnhub</option>
+          <option value="twelvedata">Twelve Data</option>
+          <option value="fmp">Financial Modeling Prep</option>
+          <option value="alphavantage">Alpha Vantage</option>
+          <option value="tiingo">Tiingo (may be CORS-blocked)</option>
+          <option value="polygon">Polygon (may be CORS-blocked)</option>
+        </select>
+      </div>
+      <div>
+        <label>API Key</label>
+        <input type="text" id="apikey" placeholder="Paste your key — leave empty for manual entry" value="">
+      </div>
+    </div>
+    <div class="api-note">Pick your provider, paste its key, then "Refresh Prices". The key stays in your browser. Never commit a real key to a public repo — leave this field empty before publishing.</div>
+    <div class="api-status" id="api-status"></div>
+  </div>
+
+  <!-- HOLDINGS -->
+  <div class="panel">
+    <div class="panel-title">
+      <span>// Holdings</span>
+      <button class="small ghost" id="refresh-btn" onclick="refreshPrices()">Refresh Prices</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Ticker</th><th>Sleeve</th><th>Shares</th><th>Price $</th><th>Value $</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="holdings-body"></tbody>
+      </table>
+    </div>
+    <div class="controls-row">
+      <button class="ghost" onclick="addRow()">+ Add Holding</button>
+      <button class="ghost" onclick="loadSample()">Load Sample Portfolio</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="panel">
+    <div class="panel-title">// Rebalance Plan</div>
+
+    <div class="stat-grid">
+      <div class="stat highlight">
+        <div class="stat-label">Portfolio Value</div>
+        <div class="stat-value" id="out-current">—</div>
+      </div>
+      <div class="stat highlight">
+        <div class="stat-label">After Deploy</div>
+        <div class="stat-value" id="out-after">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Cash Allocated</div>
+        <div class="stat-value green" id="out-allocated">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Cash Left</div>
+        <div class="stat-value" id="out-leftover">—</div>
+      </div>
+    </div>
+
+    <div id="sleeve-bars"></div>
+
+    <div style="overflow-x:auto; margin-top:20px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Sleeve</th><th>Current %</th><th>Target %</th><th>Gap</th><th>$ To Buy</th>
+          </tr>
+        </thead>
+        <tbody id="plan-body"></tbody>
+      </table>
+    </div>
+
+    <div class="note" id="note-block"></div>
+  </div>
+
+</div>
+
+<script>
+const SLEEVES = [
+  { key: 'core',  name: 'Core',            tag: 'tag-core',  bar: 'alloc-core',  isCash: false },
+  { key: 'sat',   name: 'Satellite',       tag: 'tag-sat',   bar: 'alloc-sat',   isCash: false },
+  { key: 'conv',  name: 'High Conviction', tag: 'tag-conv',  bar: 'alloc-conv',  isCash: false },
+  { key: 'hedge', name: 'Hedge',           tag: 'tag-hedge', bar: 'alloc-hedge', isCash: false },
+  { key: 'cash',  name: 'Cash',            tag: 'tag-cash',  bar: 'alloc-cash',  isCash: true  },
+];
+
+const SAMPLE = [
+  { ticker: 'SCHD', sleeve: 'core',  shares: 52, price: 27.70 },
+  { ticker: 'DGRW', sleeve: 'core',  shares: 5,  price: 90.39 },
+  { ticker: 'CNI',  sleeve: 'sat',   shares: 3,  price: 100 },
+  { ticker: 'PLD',  sleeve: 'sat',   shares: 2,  price: 110 },
+  { ticker: 'NEE',  sleeve: 'sat',   shares: 2,  price: 70 },
+  { ticker: 'LOW',  sleeve: 'sat',   shares: 2,  price: 230 },
+  { ticker: 'SHW',  sleeve: 'sat',   shares: 1,  price: 340 },
+  { ticker: 'PH',   sleeve: 'sat',   shares: 1,  price: 650 },
+  { ticker: 'LIN',  sleeve: 'sat',   shares: 1,  price: 450 },
+  { ticker: 'MA',   sleeve: 'sat',   shares: 1,  price: 480 },
+  { ticker: 'ABT',  sleeve: 'sat',   shares: 2,  price: 120 },
+  { ticker: 'AVGO', sleeve: 'conv',  shares: 2,  price: 230 },
+  { ticker: 'MSCI', sleeve: 'conv',  shares: 1,  price: 560 },
+  { ticker: 'IAU',  sleeve: 'hedge', shares: 7,  price: 55 },
+];
+
+// --- Provider adapters: each knows its own URL + how to read the price ---
+const PROVIDERS = {
+  finnhub: {
+    url: (t, k) => `https://finnhub.io/api/v1/quote?symbol=${t}&token=${k}`,
+    parse: (d) => (d && typeof d.c === 'number' && d.c > 0) ? d.c : null,
+  },
+  twelvedata: {
+    url: (t, k) => `https://api.twelvedata.com/price?symbol=${t}&apikey=${k}`,
+    parse: (d) => (d && d.price) ? parseFloat(d.price) : null,
+  },
+  alphavantage: {
+    url: (t, k) => `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${t}&apikey=${k}`,
+    parse: (d) => {
+      const q = d && d['Global Quote'];
+      const p = q && q['05. price'];
+      return p ? parseFloat(p) : null;
+    },
+  },
+  fmp: {
+    url: (t, k) => `https://financialmodelingprep.com/api/v3/quote-short/${t}?apikey=${k}`,
+    parse: (d) => (Array.isArray(d) && d[0] && d[0].price) ? parseFloat(d[0].price) : null,
+  },
+  tiingo: {
+    // Tiingo IEX endpoint returns latest price; often CORS-blocked from browser
+    url: (t, k) => `https://api.tiingo.com/iex/${t}?token=${k}`,
+    parse: (d) => {
+      const row = Array.isArray(d) ? d[0] : d;
+      const p = row && (row.last ?? row.tngoLast ?? row.prevClose);
+      return p ? parseFloat(p) : null;
+    },
+  },
+  polygon: {
+    // Polygon previous-close (free tier = delayed); often CORS-blocked from browser
+    url: (t, k) => `https://api.polygon.io/v2/aggs/ticker/${t}/prev?adjusted=true&apiKey=${k}`,
+    parse: (d) => {
+      const r = d && d.results && d.results[0];
+      return (r && r.c) ? parseFloat(r.c) : null;
+    },
+  },
+};
+
+function fmt(n, dec=0) {
+  if (n >= 1e6) return '$' + (n/1e6).toFixed(2) + 'M';
+  return '$' + n.toLocaleString('en-US', {maximumFractionDigits: dec, minimumFractionDigits: 0});
+}
+
+function sleeveOptions(selected) {
+  return SLEEVES.filter(s => !s.isCash)
+    .map(s => `<option value="${s.key}" ${s.key===selected?'selected':''}>${s.name}</option>`).join('');
+}
+
+function addRow(data) {
+  const d = data || { ticker: '', sleeve: 'core', shares: 0, price: 0 };
+  const tbody = document.getElementById('holdings-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" class="h-ticker" value="${d.ticker}" placeholder="TICKER" style="width:90px;text-transform:uppercase;"></td>
+    <td><select class="h-sleeve">${sleeveOptions(d.sleeve)}</select></td>
+    <td><input type="number" class="h-shares" value="${d.shares}" min="0" step="1" style="width:80px;"></td>
+    <td><input type="number" class="h-price" value="${d.price}" min="0" step="0.01" style="width:90px;"></td>
+    <td class="h-value">—</td>
+    <td><button class="small danger" onclick="this.closest('tr').remove();calc();">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  tr.querySelectorAll('input,select').forEach(el => el.addEventListener('input', calc));
+  calc();
+}
+
+function loadSample() {
+  document.getElementById('holdings-body').innerHTML = '';
+  SAMPLE.forEach(addRow);
+}
+
+function readHoldings() {
+  const rows = [];
+  document.querySelectorAll('#holdings-body tr').forEach(tr => {
+    const ticker = tr.querySelector('.h-ticker').value.trim().toUpperCase();
+    const sleeve = tr.querySelector('.h-sleeve').value;
+    const shares = parseFloat(tr.querySelector('.h-shares').value) || 0;
+    const price  = parseFloat(tr.querySelector('.h-price').value) || 0;
+    const value  = shares * price;
+    tr.querySelector('.h-value').textContent = fmt(value, 2);
+    rows.push({ ticker, sleeve, shares, price, value });
+  });
+  return rows;
+}
+
+function calc() {
+  const targets = {};
+  SLEEVES.forEach(s => { targets[s.key] = parseFloat(document.getElementById('t-'+s.key).value) || 0; });
+  const targetSum = Object.values(targets).reduce((a,b)=>a+b,0);
+  const warnEl = document.getElementById('target-warn');
+  warnEl.textContent = (Math.abs(targetSum - 100) > 0.01)
+    ? `⚠ Target allocation sums to ${targetSum.toFixed(1)}% — should be 100%.`
+    : '';
+
+  const holdings = readHoldings();
+  const newCash = parseFloat(document.getElementById('cash').value) || 0;
+  const existingCash = parseFloat(document.getElementById('existing-cash').value) || 0;
+
+  // Current value per sleeve (cash sleeve = existing cash position)
+  const cur = {};
+  SLEEVES.forEach(s => { cur[s.key] = 0; });
+  holdings.forEach(h => { if (cur[h.sleeve] !== undefined) cur[h.sleeve] += h.value; });
+  cur.cash = existingCash;
+
+  const totalNow = Object.values(cur).reduce((a,b)=>a+b,0); // includes existing cash
+  // After deploying new cash, total invested base grows by newCash,
+  // but existing cash stays as cash (part of total). New cash is what we ADD.
+  const totalAfter = totalNow + newCash;
+
+  // Buy-only logic. The Cash sleeve is special: we never "buy" cash, but we must
+  // RESERVE enough of the new cash to keep the cash target satisfied.
+  // Reserve = max(0, cashTargetValue - existingCash). That reserve is held back.
+  const cashTargetVal = totalAfter * (targets.cash / 100);
+  const cashReserve = Math.min(newCash, Math.max(0, cashTargetVal - existingCash));
+  const deployable = newCash - cashReserve; // what's actually available to buy securities
+
+  // Compute need for the NON-cash sleeves against the after-total.
+  const investSleeves = SLEEVES.filter(s => !s.isCash);
+  const need = {};
+  let totalNeed = 0;
+  investSleeves.forEach(s => {
+    const targetVal = totalAfter * (targets[s.key] / 100);
+    const n = Math.max(0, targetVal - cur[s.key]);
+    need[s.key] = n;
+    totalNeed += n;
+  });
+
+  const buy = {};
+  SLEEVES.forEach(s => { buy[s.key] = 0; });
+  let allocated = 0;
+
+  if (deployable > 0 && totalNeed > 0) {
+    if (deployable >= totalNeed) {
+      investSleeves.forEach(s => { buy[s.key] = need[s.key]; });
+      const remaining = deployable - totalNeed;
+      // spread leftover by target weight among invest sleeves (normalized)
+      const investTargetSum = investSleeves.reduce((a,s)=>a+targets[s.key],0) || 1;
+      investSleeves.forEach(s => { buy[s.key] += remaining * (targets[s.key] / investTargetSum); });
+      allocated = deployable;
+    } else {
+      investSleeves.forEach(s => { buy[s.key] = deployable * (need[s.key] / totalNeed); });
+      allocated = deployable;
+    }
+  } else if (deployable > 0) {
+    // already balanced — spread by invest target weight
+    const investTargetSum = investSleeves.reduce((a,s)=>a+targets[s.key],0) || 1;
+    investSleeves.forEach(s => { buy[s.key] = deployable * (targets[s.key] / investTargetSum); });
+    allocated = deployable;
+  }
+
+  // The cash reserve is "allocated" in the sense of being intentionally kept.
+  const leftover = newCash - allocated - cashReserve;
+
+  // Outputs
+  document.getElementById('out-current').textContent = fmt(totalNow);
+  document.getElementById('out-after').textContent = fmt(totalAfter);
+  document.getElementById('out-allocated').textContent = fmt(allocated);
+  document.getElementById('out-leftover').textContent = fmt(leftover + cashReserve);
+
+  // Sleeve bars
+  const barsEl = document.getElementById('sleeve-bars');
+  barsEl.innerHTML = '';
+  SLEEVES.forEach(s => {
+    const curPct = totalNow > 0 ? (cur[s.key] / totalNow) * 100 : 0;
+    const tgtPct = targets[s.key];
+    const wrap = document.createElement('div');
+    wrap.className = 'sleeve-bar-wrap';
+    wrap.innerHTML = `
+      <div class="sleeve-bar-head">
+        <span class="name"><span class="sleeve-tag ${s.tag}">${s.name}</span></span>
+        <span class="pct">${curPct.toFixed(1)}% → target ${tgtPct}%</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-current ${s.bar}" style="width:${Math.min(100,curPct)}%"></div>
+        <div class="bar-target-marker" style="left:${Math.min(100,tgtPct)}%"></div>
+      </div>
+    `;
+    barsEl.appendChild(wrap);
+  });
+
+  // Plan table
+  const planEl = document.getElementById('plan-body');
+  planEl.innerHTML = '';
+  SLEEVES.forEach(s => {
+    const curPct = totalNow > 0 ? (cur[s.key] / totalNow) * 100 : 0;
+    const gap = targets[s.key] - curPct;
+    let buyDisplay;
+    if (s.isCash) {
+      buyDisplay = cashReserve > 0.5
+        ? `<span class="buy-amt">${fmt(cashReserve)} <span style="color:var(--muted);font-weight:400;">(reserve)</span></span>`
+        : '<span class="zero-amt">—</span>';
+    } else {
+      buyDisplay = buy[s.key] > 0.5 ? `<span class="buy-amt">${fmt(buy[s.key])}</span>` : '<span class="zero-amt">—</span>';
+    }
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="sleeve-tag ${s.tag}">${s.name}</span></td>
+      <td>${curPct.toFixed(1)}%</td>
+      <td>${targets[s.key]}%</td>
+      <td style="color:${gap>0.05?'var(--green)':'var(--muted)'}">${gap>0?'+':''}${gap.toFixed(1)}%</td>
+      <td>${buyDisplay}</td>
+    `;
+    planEl.appendChild(tr);
+  });
+
+  // Note
+  const under = investSleeves.filter(s => {
+    const curPct = totalNow > 0 ? (cur[s.key] / totalNow) * 100 : 0;
+    return (targets[s.key] - curPct) > 0.1;
+  }).map(s => s.name);
+
+  let note = `<span>// LOGIC</span><br>`;
+  note += `Buy-only: new cash flows to the most under-weight sleeves first. Nothing is ever sold. `;
+  note += `The Cash sleeve holds back ${fmt(cashReserve)} to keep your ${targets.cash}% cash target before the rest is deployed.<br><br>`;
+  if (under.length) {
+    note += `<span>// FOCUS</span><br>Deploying to: ${under.join(', ')} (below target).<br>`;
+  } else {
+    note += `<span>// FOCUS</span><br>Invested sleeves at/above target — cash spread by target weight.<br>`;
+  }
+  if (leftover > 1) {
+    note += `<br><span>// NOTE</span><br>${fmt(leftover)} unallocated beyond the cash reserve — happens when sleeves are over-weight and can't absorb more without selling.`;
+  }
+  note += `<br><br><span>// NEXT STEP</span><br>Split each sleeve's $ amount across the specific tickers you want. This tool plans at the sleeve level — ticker choice stays your call.`;
+  document.getElementById('note-block').innerHTML = note;
+}
+
+// --- Live price fetch (multi-provider) ---
+async function refreshPrices() {
+  const key = document.getElementById('apikey').value.trim();
+  const providerKey = document.getElementById('provider').value;
+  const provider = PROVIDERS[providerKey];
+  const btn = document.getElementById('refresh-btn');
+  const status = document.getElementById('api-status');
+
+  if (!key) {
+    status.style.color = 'var(--red)';
+    status.textContent = 'No API key — enter prices manually or paste a key.';
+    return;
+  }
+
+  const rows = document.querySelectorAll('#holdings-body tr');
+  btn.textContent = 'Fetching...';
+  btn.disabled = true;
+  let ok = 0, fail = 0;
+
+  for (const tr of rows) {
+    const ticker = tr.querySelector('.h-ticker').value.trim().toUpperCase();
+    if (!ticker) continue;
+    try {
+      const res = await fetch(provider.url(ticker, key));
+      const data = await res.json();
+      const price = provider.parse(data);
+      if (price) { tr.querySelector('.h-price').value = price.toFixed(2); ok++; }
+      else { fail++; }
+    } catch (e) {
+      console.error('Fetch failed for', ticker, e);
+      fail++;
+    }
+    await new Promise(r => setTimeout(r, 300)); // gentle on rate limits
+  }
+
+  btn.textContent = 'Refresh Prices';
+  btn.disabled = false;
+  status.style.color = fail ? 'var(--gold)' : 'var(--green)';
+  status.textContent = `Updated ${ok} price${ok!==1?'s':''}${fail?`, ${fail} failed (check ticker/key/rate limit)`:''}.`;
+  calc();
+}
+
+// Init
+SLEEVES.forEach(s => document.getElementById('t-'+s.key).addEventListener('input', calc));
+document.getElementById('cash').addEventListener('input', calc);
+document.getElementById('existing-cash').addEventListener('input', calc);
+loadSample();
+</script>
+</body>
+</html>
