@@ -119,7 +119,105 @@ The output section shows:
 | $ To Buy | How much of the new cash goes to this sleeve |
 
 ---
+#per-ticker-max--cap
+A new optional Max % column in the Holdings table, plus a new Ticker Breakdown section in the Rebalance Plan output.
+Previously, the tool told you how many dollars to deploy into each sleeve — but not how to split that money between the individual tickers inside a sleeve. That split was left to you manually.
+With this update, the tool now allocates money all the way down to the individual ticker level, while respecting a maximum portfolio weight you define per position.
 
+6. Per-Ticker Max % Cap
+#6-per-ticker-max--cap
+Each holding in the Holdings table now has an optional Max % field (the purple column). It defines the maximum percentage of the total portfolio that this position is allowed to reach after deployment.
+FieldRequired?MeaningMax %OptionalMax share of total portfolio this ticker can receive. Empty = no cap.
+Leave it empty and the position has no limit — it behaves exactly as before.
+Set it to, say, 5 and the tool will never allocate new cash to that position if doing so would push it above 5% of the total portfolio.
+
+Why This Exists
+#why-this-exists
+Consider a sleeve with two positions — AVGO and MSCI — under High Conviction (target: 10% of total portfolio).
+Without per-ticker caps, the tool just says "put $X into High Conviction" and you decide the split. But if AVGO has already grown to 8% of the portfolio on its own, and the sleeve target is 10%, putting more money into AVGO would massively concentrate risk in a single name.
+With a Max % cap of 6% on AVGO, the tool recognizes AVGO is already above its cap, skips it entirely, and directs the full sleeve allocation to MSCI instead.
+This is the difference between sleeve-level discipline and position-level discipline.
+
+How the Ticker Breakdown Works
+#how-the-ticker-breakdown-works
+A new table appears below the Sleeve Plan in the Rebalance Plan section:
+ColumnMeaningTickerThe position nameSleeveWhich sleeve it belongs toCurrent %Position's current share of the total portfolioMax %Your defined cap (purple = under cap, red + ⚠ = at or above cap)$ To BuyHow much of the sleeve's allocation goes to this specific position
+
+Allocation Logic — Ticker Level
+#allocation-logic-ticker-level
+After the sleeve-level allocation is calculated (Step 1–4 above), each sleeve's dollar amount is broken down into individual tickers using this algorithm:
+Step 1 — Identify eligible tickers
+A ticker is eligible to receive money if:
+
+It has no Max % set, or
+Its current value is below its Max % cap
+
+room = totalAfter × (maxPct / 100) − current position value
+If room <= 0, the ticker is at or above its cap and gets nothing this round.
+Step 2 — Split equally among eligible tickers
+The sleeve's dollar amount is divided equally among all currently eligible tickers in that sleeve. No weighting by price or existing position size — equal split within the sleeve.
+perTicker = sleevePool / number of eligible tickers
+Step 3 — Apply caps and redistribute overflow
+For each eligible ticker:
+
+If perTicker ≤ room → ticker gets perTicker, remains eligible next round
+If perTicker > room → ticker gets room (capped), the excess (perTicker − room) becomes overflow
+
+The overflow is redistributed to the remaining eligible tickers in the next iteration.
+Step 4 — Repeat until pool is empty or all tickers are capped
+The algorithm runs up to 20 iterations. If all tickers in a sleeve hit their caps before the pool is empty, the remaining amount is reported as unallocated in the notes.
+Example:
+
+High Conviction sleeve: $500 to deploy. Two tickers: AVGO and MSCI.
+AVGO: current value $850, Max % = 6%, totalAfter = $10,000 → max allowed = $600 → room = $600 − $850 = −$250 → already above cap, gets $0
+MSCI: no cap → gets the full $500
+
+Result: 100% of the sleeve allocation goes to MSCI.
+Example with partial cap:
+
+Core sleeve: $1,000 to deploy. Two tickers: SCHD and DGRW. Both have Max % = 20%.
+SCHD: current value $1,679, totalAfter = $10,000 → max = $2,000 → room = $321
+DGRW: current value $479 → max = $2,000 → room = $1,521
+Round 1: perTicker = $500. SCHD can only take $321 (hits cap), overflow = $179. DGRW takes $500.
+Round 2: $179 remaining, only DGRW eligible → DGRW gets additional $179.
+Final: SCHD gets $321, DGRW gets $679.
+
+
+Visual Indicators
+#visual-indicators
+In the Ticker Breakdown table:
+
+Purple Max % value → position is under its cap, eligible for allocation
+Red Max % value + ⚠ → position is at or above its cap, getting nothing this round
+
+In the notes section at the bottom:
+// CAPS ACTIVE
+SCHD, AVGO at or above their Max % cap — cash redirected to other tickers in the same sleeve.
+
+What It Does NOT Do
+#what-it-does-not-do
+
+It does not sell positions that are above their Max %. It only stops adding more to them. This stays true to the buy-only principle.
+It does not weight allocations within a sleeve by price or conviction level — equal split among eligible tickers. If you want to weight differently, set Max % caps to force the distribution you want.
+It does not carry overflow to other sleeves. If every ticker in a sleeve is capped, that sleeve's unallocated money does not spill into another sleeve. It is reported as leftover.
+
+
+Updated JSON Structure
+#updated-json-structure
+The exported JSON now includes maxPct per holding:
+json{
+  "exported": "2026-06-07",
+  "sleeves": [ ... ],
+  "holdings": [
+    { "ticker": "SCHD", "sleeveKey": "sl_1", "shares": "52", "price": "32.30", "maxPct": "20" },
+    { "ticker": "DGRW", "sleeveKey": "sl_1", "shares": "5",  "price": "95.95", "maxPct": "20" },
+    { "ticker": "AVGO", "sleeveKey": "sl_3", "shares": "2",  "price": "385.73", "maxPct": "6" },
+    { "ticker": "MSCI", "sleeveKey": "sl_3", "shares": "1",  "price": "615.46", "maxPct": "" }
+  ],
+  "cash": "3000",
+  "existingCash": "77.5"
+}
+maxPct is a string. Empty string = no cap. Fully backward compatible — old JSON files without maxPct import correctly and default to no cap.▶ הקרא⏸⏹ShareProject contentמחשבון אלוקציה לתיק השקעות▶ הקרא⏸⏹Created by youSalary2045-Rebalancer-v3.html946 lineshtmlContentSalary2045-Rebalancer (1).htmlhtml
 ## Allocation Logic (Full Detail)
 
 ### Step 1 — Calculate the base
