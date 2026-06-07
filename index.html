@@ -274,7 +274,7 @@
       <table>
         <thead>
           <tr>
-            <th>Ticker</th><th>Sleeve</th><th>Shares</th><th>Price $</th><th>Value $</th><th></th>
+            <th>Ticker</th><th>Sleeve</th><th>Shares</th><th>Price $</th><th>Value $</th><th>Max %</th><th></th>
           </tr>
         </thead>
         <tbody id="holdings-body"></tbody>
@@ -324,6 +324,18 @@
           </tr>
         </thead>
         <tbody id="plan-body"></tbody>
+      </table>
+    </div>
+
+    <div style="overflow-x:auto; margin-top:16px;">
+      <div class="panel-title" style="margin-bottom:12px; margin-top:8px; border-top:1px solid var(--border); padding-top:16px;">// Ticker Breakdown</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Ticker</th><th>Sleeve</th><th>Current %</th><th>Max %</th><th>$ To Buy</th>
+          </tr>
+        </thead>
+        <tbody id="ticker-plan-body"></tbody>
       </table>
     </div>
 
@@ -484,7 +496,7 @@ function updateHoldingSelects() {
 // ─── HOLDINGS ───
 function addHoldingRow(data) {
   const firstNonCash = SLEEVES.find(s => !s.isCash);
-  const d = data || { ticker: '', sleeveKey: firstNonCash ? firstNonCash.key : '', shares: 0, price: 0 };
+  const d = data || { ticker: '', sleeveKey: firstNonCash ? firstNonCash.key : '', shares: 0, price: 0, maxPct: '' };
   const tbody = document.getElementById('holdings-body');
   const tr = document.createElement('tr');
   tr.innerHTML = `
@@ -493,6 +505,7 @@ function addHoldingRow(data) {
     <td><input type="number" class="h-shares" value="${d.shares}" min="0" step="1" style="width:80px;"></td>
     <td><input type="number" class="h-price" value="${d.price}" min="0" step="0.01" style="width:90px;"></td>
     <td class="h-value">—</td>
+    <td><input type="number" class="h-maxpct" value="${d.maxPct ?? ''}" min="0" max="100" step="0.5" placeholder="—" style="width:65px;color:var(--purple);"></td>
     <td><button class="small danger" onclick="this.closest('tr').remove();saveState();calc();">✕</button></td>
   `;
   tbody.appendChild(tr);
@@ -520,8 +533,10 @@ function readHoldings() {
     const shares = parseFloat(tr.querySelector('.h-shares').value) || 0;
     const price  = parseFloat(tr.querySelector('.h-price').value)  || 0;
     const value  = shares * price;
+    const maxPctRaw = tr.querySelector('.h-maxpct').value;
+    const maxPct = maxPctRaw !== '' ? parseFloat(maxPctRaw) : null;
     tr.querySelector('.h-value').textContent = fmt(value, 2);
-    rows.push({ ticker, sleeveKey, shares, price, value });
+    rows.push({ ticker, sleeveKey, shares, price, value, maxPct });
   });
   return rows;
 }
@@ -684,11 +699,70 @@ function calc() {
     planEl.appendChild(tr);
   });
 
+  // ─── Ticker-level allocation with Max % cap ───
+  const tickerBuy = {};
+  nonCash.forEach(s => {
+    const sleeveHoldings = holdings.filter(h => h.sleeveKey === s.key);
+    if (!sleeveHoldings.length) return;
+    let pool = buy[s.key];
+    const alloc = {};
+    sleeveHoldings.forEach(h => { alloc[h.ticker] = 0; });
+    let eligible = [...sleeveHoldings];
+    let maxIter = 20;
+    while (pool > 0.01 && eligible.length > 0 && maxIter-- > 0) {
+      const perTicker = pool / eligible.length;
+      let overflow = 0;
+      const nextEligible = [];
+      eligible.forEach(h => {
+        if (h.maxPct !== null) {
+          const room = Math.max(0, totalAfter * (h.maxPct / 100) - h.value - alloc[h.ticker]);
+          if (room <= 0) { overflow += perTicker; }
+          else if (perTicker > room) { alloc[h.ticker] += room; overflow += (perTicker - room); }
+          else { alloc[h.ticker] += perTicker; nextEligible.push(h); }
+        } else {
+          alloc[h.ticker] += perTicker;
+          nextEligible.push(h);
+        }
+      });
+      pool = overflow;
+      eligible = nextEligible;
+    }
+    sleeveHoldings.forEach(h => { tickerBuy[h.ticker] = (tickerBuy[h.ticker] || 0) + alloc[h.ticker]; });
+  });
+
+  // Ticker breakdown table
+  const tickerPlanEl = document.getElementById('ticker-plan-body');
+  tickerPlanEl.innerHTML = '';
+  const investHoldings = holdings.filter(h => SLEEVES.find(s => s.key === h.sleeveKey && !s.isCash));
+  investHoldings.forEach(h => {
+    const sleeve = SLEEVES.find(s => s.key === h.sleeveKey);
+    const curPct = totalNow > 0 ? (h.value / totalNow) * 100 : 0;
+    const buyAmt = tickerBuy[h.ticker] || 0;
+    const atCap = h.maxPct !== null && curPct >= h.maxPct - 0.05;
+    const maxDisplay = h.maxPct !== null
+      ? `<span style="color:${atCap ? 'var(--red)' : 'var(--purple)'};">${h.maxPct}%${atCap ? ' ⚠' : ''}</span>`
+      : '<span class="zero-amt">—</span>';
+    const buyDisplay = buyAmt > 0.5
+      ? `<span class="buy-amt">${fmt(buyAmt)}</span>`
+      : '<span class="zero-amt">—</span>';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:var(--text);font-weight:600;">${h.ticker}</td>
+      <td>${sleeve ? sleeveTag(sleeve) : h.sleeveKey}</td>
+      <td>${curPct.toFixed(1)}%</td>
+      <td>${maxDisplay}</td>
+      <td>${buyDisplay}</td>
+    `;
+    tickerPlanEl.appendChild(tr);
+  });
+
   // Note
   const under = nonCash.filter(s => {
     const curPct = totalNow > 0 ? (cur[s.key] / totalNow) * 100 : 0;
     return (s.target - curPct) > 0.1;
   }).map(s => s.name);
+
+  const capped = investHoldings.filter(h => h.maxPct !== null && totalNow > 0 && (h.value/totalNow)*100 >= h.maxPct - 0.05).map(h => h.ticker);
 
   // Cash status label for note
   let cashStatus;
@@ -701,8 +775,9 @@ function calc() {
   note += under.length
     ? `<span>// FOCUS</span><br>Deploying to: ${under.join(', ')} (below target).<br>`
     : `<span>// FOCUS</span><br>Invested sleeves at/above target — spreading by weight.<br>`;
+  if (capped.length) note += `<br><span>// CAPS ACTIVE</span><br>${capped.join(', ')} at or above their Max % cap — cash redirected to other tickers in the same sleeve.`;
   if (leftover > 1) note += `<br><span>// NOTE</span><br>${fmt(leftover)} unallocated — all sleeves over-weight, can't absorb without selling.`;
-  note += `<br><br><span>// NEXT STEP</span><br>Split each sleeve's $ amount across the specific tickers you want.`;
+  note += `<br><br><span>// NEXT STEP</span><br>See Ticker Breakdown above for exact buy amounts per position. Max % caps redirect money to uncapped siblings in the same sleeve.`;
   document.getElementById('note-block').innerHTML = note;
 }
 
@@ -717,6 +792,7 @@ function saveState() {
       sleeveKey: tr.querySelector('.h-sleeve').value,
       shares:    tr.querySelector('.h-shares').value,
       price:     tr.querySelector('.h-price').value,
+      maxPct:    tr.querySelector('.h-maxpct').value,
     });
   });
   const state = {
@@ -767,6 +843,7 @@ function exportJSON() {
       sleeveKey: tr.querySelector('.h-sleeve').value,
       shares:    tr.querySelector('.h-shares').value,
       price:     tr.querySelector('.h-price').value,
+      maxPct:    tr.querySelector('.h-maxpct').value,
     });
   });
   const state = {
