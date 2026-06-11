@@ -1,0 +1,2048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salary2045 — Rebalancer v6</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --panel: #111118;
+    --border: #1e1e2e;
+    --gold: #c9a84c;
+    --gold-dim: #7a6030;
+    --green: #2ecc71;
+    --red: #e74c3c;
+    --blue: #3b82f6;
+    --purple: #a78bfa;
+    --cash: #9ca3af;
+    --text: #e8e8f0;
+    --muted: #5a5a7a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(201,168,76,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(201,168,76,0.04) 0%, transparent 60%);
+  }
+
+  header { text-align: center; margin-bottom: 32px; }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(42px, 8vw, 72px);
+    letter-spacing: 6px;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .subtitle {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  .divider { width: 60px; height: 1px; background: var(--gold-dim); margin: 16px auto; }
+
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .panel-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  input[type="number"], input[type="text"] {
+    width: 100%;
+    background: #0d0d14;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--gold);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 9px 11px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus { border-color: var(--gold-dim); }
+  input[type="text"] { color: var(--text); }
+  input[type="checkbox"] { cursor: pointer; width: 15px; height: 15px; accent-color: var(--gold); }
+
+  .cash-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  @media (max-width: 600px) { .cash-row { grid-template-columns: 1fr; } }
+
+  button {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s;
+    border: 1px solid var(--gold-dim);
+    background: rgba(201,168,76,0.08);
+    color: var(--gold);
+    padding: 10px 16px;
+  }
+  button:hover { background: rgba(201,168,76,0.18); }
+  button.ghost { border-color: #3a3a55; background: transparent; color: #9090b0; }
+  button.ghost:hover { color: var(--text); border-color: var(--gold-dim); }
+  button.small { padding: 5px 10px; font-size: 9px; }
+  button.danger { border-color: rgba(231,76,60,0.4); color: var(--red); background: transparent; }
+  button.danger:hover { background: rgba(231,76,60,0.12); }
+
+  table { width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+  th {
+    background: #0d0d14; color: var(--muted); font-size: 9px; letter-spacing: 2px;
+    text-transform: uppercase; padding: 8px 8px; text-align: right; border-bottom: 1px solid var(--border);
+  }
+  th:first-child, th:nth-child(2) { text-align: left; }
+  td { padding: 6px 8px; text-align: right; border-bottom: 1px solid #13131a; }
+  td:first-child, td:nth-child(2) { text-align: left; }
+  tr:last-child td { border-bottom: none; }
+  td input { font-size: 13px; padding: 6px 8px; }
+  .td-center { text-align: center !important; }
+
+  .sleeve-tag {
+    display: inline-block; font-size: 9px; letter-spacing: 1px; padding: 2px 7px;
+    border-radius: 2px; text-transform: uppercase;
+  }
+
+  select {
+    background: #0d0d14; border: 1px solid var(--border); border-radius: 3px;
+    color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+    padding: 6px 8px; outline: none; cursor: pointer; width: 100%;
+  }
+  select option:disabled { color: var(--muted); }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat { background: #0d0d14; border: 1px solid var(--border); border-radius: 4px; padding: 16px; }
+  .stat.highlight { border-color: var(--gold-dim); background: rgba(201,168,76,0.04); }
+  .stat.fee-stat { border-color: rgba(231,76,60,0.3); background: rgba(231,76,60,0.03); }
+  .stat-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+  .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: var(--gold); letter-spacing: 1px; line-height: 1; }
+  .stat-value.green { color: var(--green); }
+  .stat-value.red   { color: var(--red); }
+
+  .sleeve-bar-wrap { margin-bottom: 14px; }
+  .sleeve-bar-head { display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 11px; margin-bottom: 5px; }
+  .sleeve-bar-head .name { color: var(--text); }
+  .sleeve-bar-head .pct { color: var(--muted); }
+  .bar-track { height: 8px; background: #0d0d14; border-radius: 4px; overflow: hidden; position: relative; border: 1px solid var(--border); }
+  .bar-current { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+  .bar-target-marker { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--text); opacity: 0.6; }
+
+  .note {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted);
+    line-height: 1.7; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);
+  }
+  .note span { color: var(--gold-dim); }
+
+  .buy-amt   { color: var(--green); font-weight: 600; }
+  .zero-amt  { color: var(--muted); }
+  .units-amt { color: var(--blue); font-weight: 600; }
+  .up-amt    { color: var(--purple); font-weight: 600; }
+
+  .target-warn { color: var(--red); font-family: 'IBM Plex Mono', monospace; font-size: 11px; margin-top: 10px; }
+  .api-note { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+  .controls-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .api-status { font-family: 'IBM Plex Mono', monospace; font-size: 10px; margin-top: 8px; min-height: 14px; }
+  .api-grid { display: grid; grid-template-columns: 160px 1fr; gap: 10px; align-items: end; }
+  @media (max-width: 600px) { .api-grid { grid-template-columns: 1fr; } }
+
+  /* Sleeve editor */
+  .sleeve-editor-row {
+    display: grid;
+    grid-template-columns: 1fr 90px 36px 36px;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .sleeve-editor-row input[type="text"]   { font-size: 13px; padding: 6px 10px; }
+  .sleeve-editor-row input[type="number"] { font-size: 13px; padding: 6px 10px; }
+  .color-dot {
+    width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border);
+    cursor: pointer; display: inline-block; flex-shrink: 0;
+  }
+  .sleeve-cash-label {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--muted);
+    letter-spacing: 1px; text-transform: uppercase; padding: 4px 0;
+  }
+
+  .fee-sub-label {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--gold-dim);
+    letter-spacing: 2px; text-transform: uppercase; margin: 20px 0 12px;
+    padding-top: 16px; border-top: 1px solid var(--border);
+  }
+
+  /* FX rate table */
+  .fx-table { max-width: 420px; margin-top: 8px; }
+  .fx-table th { font-size: 9px; letter-spacing: 1px; }
+  .fx-table td { padding: 5px 8px; font-size: 12px; }
+  .fx-base-badge {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--gold-dim);
+    letter-spacing: 1px; text-transform: uppercase; margin-left: 6px;
+  }
+  .curr-input {
+    width: 130px !important; font-size: 12px !important; padding: 5px 8px !important;
+    color: var(--gold) !important;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SALARY 2045</h1>
+  <div class="subtitle">Portfolio Rebalancer — Buy-Only · v6 · Multi-Currency</div>
+  <div class="divider"></div>
+</header>
+
+<div class="container">
+
+  <!-- SLEEVE MANAGER -->
+  <div class="panel">
+    <div class="panel-title">
+      <span>// Target Allocation (Sleeves)</span>
+      <button class="small ghost" onclick="addSleeve()">+ Add Sleeve</button>
+    </div>
+    <div id="sleeve-editor"></div>
+    <div class="target-warn" id="target-warn"></div>
+  </div>
+
+  <!-- CASH + FEES + MODE + API -->
+  <div class="panel">
+    <div class="panel-title">// Cash</div>
+    <div class="cash-row">
+      <div>
+        <label>Available Cash to Deploy</label>
+        <input type="number" id="cash" value="2000" min="0" step="100">
+        <div class="api-note">New money you're adding now. Always in base currency.</div>
+      </div>
+      <div>
+        <label>Existing Cash Position</label>
+        <input type="number" id="existing-cash" value="500" min="0" step="100">
+        <div class="api-note">Cash already in your account. Counts toward the Cash sleeve target. In base currency.</div>
+      </div>
+    </div>
+
+    <!-- BASE CURRENCY (Stage 3) -->
+    <div class="fee-sub-label">// Base Currency</div>
+    <div class="cash-row">
+      <div>
+        <label>Base Currency</label>
+        <input type="text" id="base-currency" value="USD" maxlength="4" placeholder="USD"
+          style="width:100%;text-transform:uppercase;"
+          oninput="this.value=this.value.toUpperCase();"
+          onblur="onBaseCurrencyChange();">
+        <div class="api-note">All values display in this currency. Deposits are always in base. Per-ticker Currency field sets native denomination.</div>
+      </div>
+    </div>
+
+    <!-- FEES (Stage 1 / Req 2) -->
+    <div class="fee-sub-label">// Transaction Fees (Optional)</div>
+    <div class="cash-row">
+      <div>
+        <label>Fixed Fee per Trade</label>
+        <input type="number" id="fee-fixed" value="" min="0" step="0.01" placeholder="0"
+          oninput="updateVersionUI();">
+        <div class="api-note">Flat amount (base currency) charged per trade.</div>
+      </div>
+      <div>
+        <label>Percentage Fee per Trade (%)</label>
+        <input type="number" id="fee-pct" value="" min="0" step="0.001" placeholder="0"
+          oninput="updateVersionUI();">
+        <div class="api-note">% of trade size. Both filled → fee = fixed + pct × trade$.</div>
+      </div>
+    </div>
+
+    <!-- OPTIMIZATION MODE (Req 3, 10) -->
+    <div class="fee-sub-label">// Optimization Mode</div>
+    <div class="cash-row" style="align-items:start;">
+      <div>
+        <label>Trade Strategy</label>
+        <select id="version-select" onchange="updateVersionUI();">
+          <option value="A">Version A — Maximize Allocation Accuracy</option>
+          <option value="B">Version B — Honor Fee Budget</option>
+        </select>
+        <div class="api-note">Version B cuts smallest trades until Σ fees ≤ budget. Requires fees &gt; 0 — automatically falls back to A when fees are cleared.</div>
+      </div>
+      <div id="fee-budget-row" style="display:none;">
+        <label>Max Total Fee Budget</label>
+        <input type="number" id="fee-budget" value="" min="0" step="0.01" placeholder="e.g. 5.00"
+          oninput="saveState();calc();">
+        <div class="api-note">Sum of all trade fees must not exceed this. Leave empty to skip cutting.</div>
+      </div>
+    </div>
+
+    <!-- OVERSHOOT TOLERANCE (Req 14) -->
+    <div class="fee-sub-label">// Whole-Unit Round-Up Tolerance</div>
+    <div style="max-width:320px;">
+      <label>Overshoot Tolerance (%)</label>
+      <input type="number" id="overshoot-tol" value="0.5" min="0" step="0.1" placeholder="0.5"
+        oninput="saveState();calc();">
+      <div class="api-note">Max % of portfolio value a whole-unit ticker may overshoot its Phase 1 target when rounding up (only when remainder ≥ 0.5 unit). Set 0 to always round down.</div>
+    </div>
+
+    <div class="panel-title" style="margin-top:24px;">// Live Prices (Optional)</div>
+    <div class="api-grid">
+      <div>
+        <label>Provider</label>
+        <select id="provider">
+          <option value="finnhub">Finnhub</option>
+          <option value="twelvedata">Twelve Data</option>
+          <option value="fmp">Financial Modeling Prep</option>
+          <option value="alphavantage">Alpha Vantage</option>
+          <option value="tiingo">Tiingo (may be CORS-blocked)</option>
+          <option value="polygon">Polygon (may be CORS-blocked)</option>
+        </select>
+      </div>
+      <div>
+        <label>API Key</label>
+        <input type="text" id="apikey" placeholder="Paste your key — leave empty for manual entry" value="">
+      </div>
+    </div>
+    <div class="api-note">Pick your provider, paste its key, then "Refresh Prices". The key stays in your browser.</div>
+    <div class="api-status" id="api-status"></div>
+  </div>
+
+  <!-- FX RATES (Stage 3a) -->
+  <div class="panel">
+    <div class="panel-title">
+      <span>// FX Rates <span id="fx-base-label" style="color:var(--muted);font-size:9px;letter-spacing:1px;">(base: USD)</span></span>
+      <button class="small ghost" onclick="fetchFxRates()">↻ Refresh Rates</button>
+    </div>
+    <div class="api-note" style="margin-bottom:8px;">
+      Rates from frankfurter.app (free, no key). Editable — override manually if offline or to fix a rate.
+      Only currencies currently in use are shown. Switching base clears rates and auto-fetches.
+    </div>
+    <div id="fx-rate-table"></div>
+    <div class="api-status" id="fx-status"></div>
+    <div class="api-status" id="fx-missing-banner"></div>
+  </div>
+
+  <!-- HOLDINGS -->
+  <div class="panel">
+    <div class="panel-title">
+      <span>// Holdings</span>
+      <button class="small ghost" id="refresh-btn" onclick="refreshPrices()">Refresh Prices</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Ticker</th>
+            <th>Sleeve</th>
+            <th>Shares</th>
+            <th>Price (native)</th>
+            <th>Curr</th>
+            <th id="th-value-base">Value (USD)</th>
+            <th>Max %</th>
+            <th style="text-align:center;" title="Allow fractional share buys">Frac</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="holdings-body"></tbody>
+      </table>
+    </div>
+    <div class="api-note" style="margin-top:8px;">
+      Curr = native currency of the ticker (e.g. GBP for London-listed stocks). Price is always in native currency.
+      Value column converts to base using FX rates above. Frac = allow fractional new buys.
+    </div>
+    <div class="controls-row">
+      <button class="ghost" onclick="addHoldingRow()">+ Add Holding</button>
+      <button class="ghost" onclick="loadSample()">Load Sample Portfolio</button>
+      <button class="ghost" onclick="exportJSON()">↓ Export JSON</button>
+      <label style="display:inline-flex;align-items:center;margin:0;">
+        <button class="ghost" onclick="document.getElementById('import-file').click()">↑ Import JSON</button>
+        <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
+      </label>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="panel">
+    <div class="panel-title">// Rebalance Plan</div>
+
+    <div class="stat-grid">
+      <div class="stat highlight">
+        <div class="stat-label">Portfolio Value</div>
+        <div class="stat-value" id="out-current">—</div>
+      </div>
+      <div class="stat highlight">
+        <div class="stat-label">After Deploy</div>
+        <div class="stat-value" id="out-after">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Cash Allocated</div>
+        <div class="stat-value green" id="out-allocated">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Cash Left</div>
+        <div class="stat-value" id="out-leftover">—</div>
+      </div>
+      <div class="stat fee-stat" id="fee-stat-box" style="display:none;">
+        <div class="stat-label">Total Fees</div>
+        <div class="stat-value red" id="out-fees">—</div>
+      </div>
+    </div>
+
+    <div id="sleeve-bars"></div>
+
+    <div style="overflow-x:auto; margin-top:20px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Sleeve</th><th>Current %</th><th>After %</th><th>Target %</th><th>Gap</th><th>$ To Buy</th>
+          </tr>
+        </thead>
+        <tbody id="plan-body"></tbody>
+      </table>
+    </div>
+
+    <div style="overflow-x:auto; margin-top:16px;">
+      <div class="panel-title" style="margin-bottom:12px; margin-top:8px; border-top:1px solid var(--border); padding-top:16px;">// Ticker Breakdown</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Ticker</th><th>Sleeve</th><th>Curr</th><th>Current %</th><th>Max %</th><th>Units</th><th>$ To Buy</th>
+          </tr>
+        </thead>
+        <tbody id="ticker-plan-body"></tbody>
+      </table>
+    </div>
+
+    <div class="note" id="note-block"></div>
+  </div>
+
+</div>
+
+<script>
+// ─── PALETTE ───
+const PALETTE = [
+  '#3b82f6','#c9a84c','#a78bfa','#2ecc71','#9ca3af',
+  '#f97316','#ec4899','#06b6d4','#84cc16','#ef4444'
+];
+
+// ─── SLEEVES ───
+let SLEEVES = [];
+let _sleeveCounter = 0;
+
+function genKey() { return 'sl_' + (++_sleeveCounter); }
+
+const DEFAULT_SLEEVES = [
+  { name: 'Core',            color: '#3b82f6', target: 40, isCash: false },
+  { name: 'Satellite',       color: '#c9a84c', target: 38, isCash: false },
+  { name: 'High Conviction', color: '#a78bfa', target: 10, isCash: false },
+  { name: 'Hedge',           color: '#2ecc71', target:  7, isCash: false },
+  { name: 'Cash',            color: '#9ca3af', target:  5, isCash: true  },
+];
+
+const SAMPLE_HOLDINGS = [
+  { ticker: 'SCHD', sleeveIdx: 0, shares: 52, price: 27.70,  fractionable: false },
+  { ticker: 'DGRW', sleeveIdx: 0, shares:  5, price: 90.39,  fractionable: false },
+  { ticker: 'CNI',  sleeveIdx: 1, shares:  3, price: 100,    fractionable: false },
+  { ticker: 'PLD',  sleeveIdx: 1, shares:  2, price: 110,    fractionable: false },
+  { ticker: 'NEE',  sleeveIdx: 1, shares:  2, price:  70,    fractionable: false },
+  { ticker: 'LOW',  sleeveIdx: 1, shares:  2, price: 230,    fractionable: false },
+  { ticker: 'SHW',  sleeveIdx: 1, shares:  1, price: 340,    fractionable: false },
+  { ticker: 'PH',   sleeveIdx: 1, shares:  1, price: 650,    fractionable: false },
+  { ticker: 'LIN',  sleeveIdx: 1, shares:  1, price: 450,    fractionable: false },
+  { ticker: 'MA',   sleeveIdx: 1, shares:  1, price: 480,    fractionable: false },
+  { ticker: 'ABT',  sleeveIdx: 1, shares:  2, price: 120,    fractionable: false },
+  { ticker: 'AVGO', sleeveIdx: 2, shares:  2, price: 230,    fractionable: false },
+  { ticker: 'MSCI', sleeveIdx: 2, shares:  1, price: 560,    fractionable: false },
+  { ticker: 'IAU',  sleeveIdx: 3, shares:  7, price:  55,    fractionable: false },
+];
+
+// ─── PROVIDERS ───
+const PROVIDERS = {
+  finnhub:      { url: (t,k) => `https://finnhub.io/api/v1/quote?symbol=${t}&token=${k}`, parse: d => (d&&typeof d.c==='number'&&d.c>0)?d.c:null },
+  twelvedata:   { url: (t,k) => `https://api.twelvedata.com/price?symbol=${t}&apikey=${k}`, parse: d => (d&&d.price)?parseFloat(d.price):null },
+  alphavantage: { url: (t,k) => `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${t}&apikey=${k}`, parse: d => { const q=d&&d['Global Quote']; const p=q&&q['05. price']; return p?parseFloat(p):null; } },
+  fmp:          { url: (t,k) => `https://financialmodelingprep.com/api/v3/quote-short/${t}?apikey=${k}`, parse: d => (Array.isArray(d)&&d[0]&&d[0].price)?parseFloat(d[0].price):null },
+  tiingo:       { url: (t,k) => `https://api.tiingo.com/iex/${t}?token=${k}`, parse: d => { const r=Array.isArray(d)?d[0]:d; const p=r&&(r.last??r.tngoLast??r.prevClose); return p?parseFloat(p):null; } },
+  polygon:      { url: (t,k) => `https://api.polygon.io/v2/aggs/ticker/${t}/prev?adjusted=true&apiKey=${k}`, parse: d => { const r=d&&d.results&&d.results[0]; return (r&&r.c)?parseFloat(r.c):null; } },
+};
+
+// ─── CURRENCY SYMBOLS ───
+const CURRENCY_SYMBOLS = {
+  USD:'$', EUR:'€', GBP:'£', ILS:'₪', JPY:'¥', CHF:'Fr\u00a0',
+  CAD:'C$', AUD:'A$', HKD:'HK$', SGD:'S$', NZD:'NZ$',
+  SEK:'kr\u00a0', NOK:'kr\u00a0', DKK:'kr\u00a0', CNY:'¥', INR:'₹'
+};
+
+// ─── FX MODULE (Stage 3a) ───
+// FX_RATES stores rates as returned by frankfurter.app with FX_BASE as base:
+//   FX_RATES['EUR'] = 0.93  means  1 USD = 0.93 EUR  (when base = USD)
+// toBase(amount, 'EUR')  → amount / 0.93  (convert EUR → USD)
+// fromBase(amount, 'EUR') → amount * 0.93  (convert USD → EUR)
+
+let FX_BASE      = 'USD';
+let FX_RATES     = {};       // { 'EUR': 0.93, 'GBP': 0.79, ... }
+let FX_TIMESTAMP = null;
+
+function toBase(amount, currency) {
+  const c = (currency || FX_BASE).toUpperCase();
+  if (c === FX_BASE) return amount;
+  const rate = FX_RATES[c];
+  if (!rate || rate <= 0) return null;   // missing rate → unconvertible, never passthrough
+  return amount / rate;
+}
+
+function fromBase(amount, currency) {
+  const c = (currency || FX_BASE).toUpperCase();
+  if (c === FX_BASE) return amount;
+  const rate = FX_RATES[c];
+  if (!rate || rate <= 0) return null;   // missing rate → unconvertible
+  return amount * rate;
+}
+
+// ─── Rate-availability helpers (Stage 3a patch) ───
+// Returns true if a valid rate exists for currency. Base is always valid (rate = 1).
+function hasRate(currency) {
+  const c = (currency || FX_BASE).toUpperCase();
+  if (c === FX_BASE) return true;
+  return typeof FX_RATES[c] === 'number' && isFinite(FX_RATES[c]) && FX_RATES[c] > 0;
+}
+
+// Returns the subset of active currencies for which hasRate() is false.
+// Empty array = all rates present; a single-currency portfolio always returns [].
+function getMissingCurrencies() {
+  return getActiveCurrencies().filter(c => !hasRate(c));
+}
+
+// Drives the missing-rate banner adjacent to the FX rate table.
+// Called from calc() and directly after fetch failure.
+function updateFxBanner() {
+  const bannerEl = document.getElementById('fx-missing-banner');
+  if (!bannerEl) return;
+  const missing = getMissingCurrencies();
+  if (missing.length === 0) {
+    bannerEl.textContent = '';
+    bannerEl.style.color = '';
+  } else {
+    bannerEl.style.color = 'var(--gold)';
+    bannerEl.textContent = `Missing rates for: ${missing.join(', ')}. Enter manually in the table above or refresh.`;
+  }
+}
+
+// Returns all distinct currency codes currently in holdings + the base currency
+function getActiveCurrencies() {
+  const set = new Set([FX_BASE]);
+  document.querySelectorAll('#holdings-body .h-currency').forEach(el => {
+    const v = el.value.trim().toUpperCase();
+    if (v && v.length >= 2) set.add(v);
+  });
+  return [...set].sort((a, b) => a === FX_BASE ? -1 : b === FX_BASE ? 1 : a.localeCompare(b));
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderRateTable() {
+  const el = document.getElementById('fx-rate-table');
+  if (!el) return;
+  const currencies = getActiveCurrencies();
+
+  let html = `<table class="fx-table">
+    <thead>
+      <tr>
+        <th style="text-align:left;">Currency</th>
+        <th style="text-align:right;">1 ${escHtml(FX_BASE)} =</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  currencies.forEach(curr => {
+    if (curr === FX_BASE) {
+      html += `<tr>
+        <td style="text-align:left;"><strong>${escHtml(curr)}</strong>
+          <span class="fx-base-badge">base</span></td>
+        <td style="text-align:right;color:var(--muted);">1.000000</td>
+        <td></td>
+      </tr>`;
+    } else {
+      const rate = (FX_RATES[curr] !== undefined) ? FX_RATES[curr] : 1;
+      html += `<tr>
+        <td style="text-align:left;"><strong>${escHtml(curr)}</strong></td>
+        <td style="text-align:right;">
+          <input type="number" class="curr-input fx-rate-input"
+            data-currency="${escHtml(curr)}"
+            value="${rate.toFixed(6)}"
+            min="0.000001" step="0.000001"
+            oninput="onFxRateEdit(this);">
+        </td>
+        <td style="text-align:left;color:var(--muted);font-size:9px;padding-left:4px;">${escHtml(curr)}</td>
+      </tr>`;
+    }
+  });
+
+  html += '</tbody></table>';
+  if (currencies.length <= 1) {
+    html += `<div class="api-note" style="margin-top:6px;">Add holdings with non-base currencies to see conversion rows.</div>`;
+  }
+  el.innerHTML = html;
+}
+
+function onFxRateEdit(input) {
+  const currency = input.dataset.currency;
+  const val = parseFloat(input.value);
+  if (currency && val > 0) {
+    FX_RATES[currency] = val;
+    saveState();
+    calc();
+  }
+}
+
+async function fetchFxRates() {
+  const statusEl = document.getElementById('fx-status');
+  if (!statusEl) return;
+  statusEl.style.color = 'var(--gold)';
+  statusEl.textContent = 'Fetching rates from frankfurter.app…';
+
+  // Request only currencies that are actually in use (avoids over-fetching)
+  const foreign = getActiveCurrencies().filter(c => c !== FX_BASE);
+  const symbolsParam = foreign.length ? '&symbols=' + foreign.join(',') : '';
+  const url = `https://api.frankfurter.app/latest?base=${encodeURIComponent(FX_BASE)}${symbolsParam}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data.rates) throw new Error('No rates in response');
+
+    // Merge into FX_RATES (keeps any manual overrides for currencies not returned)
+    Object.assign(FX_RATES, data.rates);
+    FX_TIMESTAMP = new Date().toISOString();
+
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = `Rates updated ${new Date(FX_TIMESTAMP).toLocaleString()}.`;
+
+    renderRateTable();
+    saveState();
+    calc();
+  } catch (e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = `Fetch failed: ${e.message}. Manual rates active.`;
+    calc();  // refresh display with missing-rate guards after failed fetch
+  }
+}
+
+function onBaseCurrencyChange() {
+  const newBase = document.getElementById('base-currency').value.trim().toUpperCase();
+  if (!newBase || newBase === FX_BASE) return;
+  FX_BASE = newBase;
+  FX_RATES = {};   // rates are base-relative; old rates are invalid after base switch
+  updateBaseDisplay();
+  renderRateTable();
+  fetchFxRates();  // auto-fetch with new base (also calls saveState + calc on completion)
+}
+
+// Sync all DOM elements that display the base currency name
+function updateBaseDisplay() {
+  const baseLabelEl = document.getElementById('fx-base-label');
+  if (baseLabelEl) baseLabelEl.textContent = `(base: ${FX_BASE})`;
+
+  const thEl = document.getElementById('th-value-base');
+  if (thEl) thEl.textContent = `Value (${FX_BASE})`;
+
+  const baseInput = document.getElementById('base-currency');
+  if (baseInput && baseInput.value.toUpperCase() !== FX_BASE) baseInput.value = FX_BASE;
+}
+
+// ─── fmt ─── (uses base currency symbol; signature unchanged for backwards compatibility)
+function fmt(n, dec=0) {
+  const sym = CURRENCY_SYMBOLS[FX_BASE] || (FX_BASE + '\u00a0');
+  if (n >= 1e6) return sym + (n/1e6).toFixed(2) + 'M';
+  return sym + n.toLocaleString('en-US', {maximumFractionDigits: dec, minimumFractionDigits: dec > 0 ? dec : 0});
+}
+
+// ─── fmtNative ─── Format a native-currency amount (Ticker Breakdown $ To Buy column).
+// For base-currency tickers, delegates to fmt() — result is identical.
+function fmtNative(n, currency, dec=2) {
+  const c = (currency || FX_BASE).toUpperCase();
+  if (c === FX_BASE) return fmt(n, dec);
+  const sym = CURRENCY_SYMBOLS[c] || (c + '\u00a0');
+  if (n >= 1e6) return sym + (n/1e6).toFixed(2) + 'M';
+  return sym + n.toLocaleString('en-US', {maximumFractionDigits: dec, minimumFractionDigits: dec > 0 ? dec : 0});
+}
+
+function fmtUnits(n, fractionable, roundedUp) {
+  if (n <= 0) return '<span class="zero-amt">—</span>';
+  const display = fractionable ? n.toFixed(4).replace(/\.?0+$/, '') : String(Math.floor(n));
+  const cls     = roundedUp ? 'up-amt' : 'units-amt';
+  const suffix  = roundedUp ? ' ▲' : '';
+  return `<span class="${cls}">${display}${suffix}</span>`;
+}
+
+// ─── SLEEVE RENDERING ───
+function renderSleeveEditor() {
+  const el = document.getElementById('sleeve-editor');
+  el.innerHTML = '';
+  SLEEVES.forEach((s, i) => {
+    const row = document.createElement('div');
+    row.className = 'sleeve-editor-row';
+    if (s.isCash) {
+      row.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="sleeve-tag" style="background:${hexToRgba(s.color,0.12)};color:${s.color};border:1px solid ${hexToRgba(s.color,0.3)};">${s.name}</span>
+          <span class="sleeve-cash-label">cash sleeve — always last</span>
+        </div>
+        <input type="number" value="${s.target}" min="0" max="100" step="0.5"
+          style="width:80px;" oninput="SLEEVES[${i}].target=parseFloat(this.value)||0;saveState();calc();">
+        <div></div><div></div>`;
+    } else {
+      row.innerHTML = `
+        <input type="text" value="${s.name}" placeholder="Sleeve name"
+          oninput="SLEEVES[${i}].name=this.value;updateHoldingSelects();saveState();calc();">
+        <input type="number" value="${s.target}" min="0" max="100" step="0.5"
+          oninput="SLEEVES[${i}].target=parseFloat(this.value)||0;saveState();calc();">
+        <input type="color" value="${s.color}" title="Color"
+          style="width:32px;height:32px;padding:2px;background:#0d0d14;border:1px solid var(--border);border-radius:3px;cursor:pointer;"
+          oninput="SLEEVES[${i}].color=this.value;saveState();calc();">
+        <button class="small danger" title="Delete sleeve" onclick="deleteSleeve(${i})">✕</button>`;
+    }
+    el.appendChild(row);
+  });
+}
+
+function addSleeve() {
+  const usedColors = SLEEVES.map(s => s.color);
+  const color = PALETTE.find(c => !usedColors.includes(c)) || PALETTE[SLEEVES.length % PALETTE.length];
+  const cashIdx = SLEEVES.findIndex(s => s.isCash);
+  const newSleeve = { key: genKey(), name: 'New Sleeve', color, target: 0, isCash: false };
+  if (cashIdx >= 0) SLEEVES.splice(cashIdx, 0, newSleeve);
+  else SLEEVES.push(newSleeve);
+  renderSleeveEditor(); updateHoldingSelects(); saveState(); calc();
+}
+
+function deleteSleeve(i) {
+  if (SLEEVES[i].isCash) return;
+  const key = SLEEVES[i].key;
+  SLEEVES.splice(i, 1);
+  const fallback = SLEEVES.find(s => !s.isCash);
+  document.querySelectorAll('#holdings-body tr').forEach(tr => {
+    const sel = tr.querySelector('.h-sleeve');
+    if (sel && sel.value === key) sel.value = fallback ? fallback.key : '';
+  });
+  renderSleeveEditor(); updateHoldingSelects(); saveState(); calc();
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function sleeveTag(s) {
+  return `<span class="sleeve-tag" style="background:${hexToRgba(s.color,0.12)};color:${s.color};border:1px solid ${hexToRgba(s.color,0.3)};">${s.name}</span>`;
+}
+
+function sleeveOptions(selectedKey) {
+  return SLEEVES.filter(s => !s.isCash)
+    .map(s => `<option value="${s.key}" ${s.key===selectedKey?'selected':''}>${s.name}</option>`).join('');
+}
+
+function updateHoldingSelects() {
+  document.querySelectorAll('#holdings-body tr').forEach(tr => {
+    const sel = tr.querySelector('.h-sleeve');
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = sleeveOptions(cur);
+    if (!SLEEVES.find(s => s.key === sel.value)) {
+      const first = SLEEVES.find(s => !s.isCash);
+      if (first) sel.value = first.key;
+    }
+  });
+}
+
+// ─── VERSION UI (Req 3, 10) ───
+function applyVersionUI() {
+  const fixedFee = parseFloat(document.getElementById('fee-fixed').value) || 0;
+  const pctFee   = parseFloat(document.getElementById('fee-pct').value)   || 0;
+  const hasFees  = fixedFee > 0 || pctFee > 0;
+  const selEl    = document.getElementById('version-select');
+  const optB     = selEl.querySelector('option[value="B"]');
+
+  if (!hasFees) {
+    optB.disabled = true;
+    if (selEl.value === 'B') selEl.value = 'A';
+  } else {
+    optB.disabled = false;
+  }
+  document.getElementById('fee-budget-row').style.display = selEl.value === 'B' ? '' : 'none';
+}
+
+function updateVersionUI() {
+  applyVersionUI();
+  saveState();
+  calc();
+}
+
+// ─── HOLDINGS ───
+function addHoldingRow(data) {
+  const firstNonCash = SLEEVES.find(s => !s.isCash);
+  const d = data || {};
+  const ticker       = d.ticker       !== undefined ? d.ticker       : '';
+  const sleeveKey    = d.sleeveKey    !== undefined ? d.sleeveKey    : (firstNonCash ? firstNonCash.key : '');
+  const shares       = d.shares       !== undefined ? d.shares       : 0;
+  const price        = d.price        !== undefined ? d.price        : 0;
+  const maxPct       = d.maxPct       !== undefined ? d.maxPct       : '';
+  const fractionable = d.fractionable !== undefined ? !!d.fractionable : false;
+  // Stage 3: currency field — defaults to current base currency
+  const currency     = d.currency     !== undefined ? d.currency     : FX_BASE;
+
+  const tbody = document.getElementById('holdings-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text"   class="h-ticker"   value="${ticker}"   placeholder="TICKER" style="width:90px;text-transform:uppercase;"></td>
+    <td><select class="h-sleeve">${sleeveOptions(sleeveKey)}</select></td>
+    <td><input type="number" class="h-shares"   value="${shares}"   min="0" step="1"    style="width:80px;"></td>
+    <td><input type="number" class="h-price"    value="${price}"    min="0" step="0.01" style="width:90px;"></td>
+    <td><input type="text"   class="h-currency" value="${currency}" placeholder="${FX_BASE}" maxlength="4"
+          style="width:55px;text-transform:uppercase;" title="Native currency of this ticker"></td>
+    <td class="h-value">—</td>
+    <td><input type="number" class="h-maxpct"   value="${maxPct}"  min="0" max="100" step="0.5" placeholder="—" style="width:65px;color:var(--purple);"></td>
+    <td class="td-center"><input type="checkbox" class="h-frac" ${fractionable ? 'checked' : ''} title="Allow fractional buys for this ticker"></td>
+    <td><button class="small danger" onclick="this.closest('tr').remove();renderRateTable();saveState();calc();">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+
+  // Generic change handler (save + recalc)
+  tr.querySelectorAll('input,select').forEach(el => el.addEventListener('input',  () => { saveState(); calc(); }));
+  tr.querySelectorAll('input[type="checkbox"]').forEach(el => el.addEventListener('change', () => { saveState(); calc(); }));
+
+  // Currency-specific: uppercase + refresh rate table when currency changes
+  const currEl = tr.querySelector('.h-currency');
+  currEl.addEventListener('input', () => {
+    currEl.value = currEl.value.toUpperCase();
+    renderRateTable();
+  });
+
+  // Render rate table now in case a new currency was introduced
+  renderRateTable();
+  calc();
+}
+
+function loadSample() {
+  initDefaultSleeves();
+  renderSleeveEditor();
+  document.getElementById('holdings-body').innerHTML = '';
+  SAMPLE_HOLDINGS.forEach(h => {
+    const s = SLEEVES[h.sleeveIdx] || SLEEVES[0];
+    addHoldingRow({ ticker: h.ticker, sleeveKey: s.key, shares: h.shares, price: h.price, fractionable: h.fractionable });
+    // currency defaults to FX_BASE for all sample holdings
+  });
+  saveState();
+}
+
+function readHoldings() {
+  const rows = [];
+  document.querySelectorAll('#holdings-body tr').forEach(tr => {
+    const ticker       = tr.querySelector('.h-ticker').value.trim().toUpperCase();
+    const sleeveKey    = tr.querySelector('.h-sleeve').value;
+    const shares       = parseFloat(tr.querySelector('.h-shares').value) || 0;
+    const price        = parseFloat(tr.querySelector('.h-price').value)  || 0;
+    // Stage 3: read currency, compute base-converted value for display
+    const currencyRaw  = tr.querySelector('.h-currency')?.value?.trim().toUpperCase() || FX_BASE;
+    const currency     = currencyRaw || FX_BASE;
+    const value        = shares * price;                  // native currency value
+    const valueBase    = toBase(value, currency);         // base-currency value (display); null if rate missing
+    const maxPctRaw    = tr.querySelector('.h-maxpct').value;
+    const maxPct       = maxPctRaw !== '' ? parseFloat(maxPctRaw) : null;
+    const fractionable = tr.querySelector('.h-frac').checked;
+
+    // Display value in base currency in the Value column; ↻ pending if rate is absent
+    if (valueBase === null) {
+      tr.querySelector('.h-value').innerHTML = '<span style="color:var(--muted);font-family:\'IBM Plex Mono\',monospace;font-size:11px;">↻ pending</span>';
+    } else {
+      tr.querySelector('.h-value').textContent = fmt(valueBase, 2);
+    }
+
+    rows.push({ ticker, sleeveKey, shares, price, value, valueBase, currency, maxPct, fractionable });
+  });
+  return rows;
+}
+
+// ─── SHARED HELPER: Req 14 whole-unit round-up gate (Stage 3b) ───
+// amounts[ticker] and recyclePool are in BASE. totalAfter is in BASE.
+// h.valueBase is the current holding value in BASE.
+// Unit counting is done in NATIVE (convert BASE→native, divide by native price, floor),
+// then convert back to BASE. Guard comparisons (overshoot, capRoom, recyclePool) stay in BASE.
+// For a single-currency (all-base) portfolio: fromBase/toBase are identity → byte-for-byte v5.
+function applyWholeUnitRoundingGate(holdings, amounts, recyclePool, totalAfter, overshootTol, tickerRoundedUp, EPSILON) {
+  holdings.forEach(h => {
+    if (!h.fractionable && h.price > 0 && amounts[h.ticker] > 0) {
+      // Convert BASE allocation to native for share counting
+      const allocNative       = fromBase(amounts[h.ticker], h.currency);
+      const wholeUnits        = Math.floor(allocNative / h.price);
+      const roundedDownNative = wholeUnits * h.price;
+      const fracNative        = allocNative - roundedDownNative;
+      const remainder         = fracNative / h.price;  // fraction of one share
+
+      let didRoundUp = false;
+      if (remainder >= 0.5 && overshootTol > 0) {
+        const roundUpNative = (wholeUnits + 1) * h.price;
+        const extraNative   = roundUpNative - allocNative;
+        const extraBase     = toBase(extraNative, h.currency);  // guard in BASE
+        const overshootPct  = (extraBase / totalAfter) * 100;
+        const capRoom       = h.maxPct !== null
+          ? Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase - amounts[h.ticker])
+          : Infinity;
+
+        if (overshootPct <= overshootTol + 1e-9 &&
+            extraBase  <= capRoom      + EPSILON &&
+            extraBase  <= recyclePool  + EPSILON) {
+          amounts[h.ticker]         = toBase(roundUpNative, h.currency);  // write back in BASE
+          recyclePool              -= extraBase;
+          tickerRoundedUp[h.ticker] = true;
+          didRoundUp = true;
+        }
+      }
+      if (!didRoundUp) {
+        const roundDownBase  = toBase(roundedDownNative, h.currency);  // BASE
+        const fracBase       = amounts[h.ticker] - roundDownBase;
+        amounts[h.ticker]    = roundDownBase;
+        recyclePool         += fracBase;
+        tickerRoundedUp[h.ticker] = false;
+      }
+    }
+  });
+  return recyclePool;
+}
+
+// ─── CALC ───
+function calc() {
+  const EPSILON = 0.01;
+
+  const fixedFee = parseFloat(document.getElementById('fee-fixed').value) || 0;
+  const pctFee   = parseFloat(document.getElementById('fee-pct').value)   || 0;
+  const hasFees  = fixedFee > 0 || pctFee > 0;
+
+  const versionB    = document.getElementById('version-select').value === 'B' && hasFees;
+  const feeBudget   = parseFloat(document.getElementById('fee-budget').value)   || 0;
+  const overshootTol = parseFloat(document.getElementById('overshoot-tol').value) || 0;
+
+  const nonCash    = SLEEVES.filter(s => !s.isCash);
+  const cashSleeve = SLEEVES.find(s => s.isCash);
+
+  const targetSum = SLEEVES.reduce((a,s)=>a+s.target,0);
+  const warnEl = document.getElementById('target-warn');
+  warnEl.textContent = (Math.abs(targetSum - 100) > 0.01)
+    ? `⚠ Target allocation sums to ${targetSum.toFixed(1)}% — should be 100%.` : '';
+
+  const holdings     = readHoldings();
+  const newCash      = parseFloat(document.getElementById('cash').value)          || 0;
+  const existingCash = parseFloat(document.getElementById('existing-cash').value) || 0;
+
+  // ── Base-currency totals (display + allocation) ──
+  const _pendingHtml = '<span style="color:var(--muted);font-family:\'IBM Plex Mono\',monospace;font-size:14px;letter-spacing:2px;">↻ pending</span>';
+  updateFxBanner();
+
+  const anyUnconvertible = holdings.some(h => h.valueBase === null);
+  let totalNowBase   = null;
+  let totalAfterBase = null;
+  if (!anyUnconvertible) {
+    totalNowBase = existingCash;
+    holdings.forEach(h => { totalNowBase += h.valueBase; });
+    totalAfterBase = totalNowBase + newCash;
+  }
+
+  // ── STAGE 3b: hard allocation gate — no plan when any active rate is missing ──
+  if (getMissingCurrencies().length > 0) {
+    document.getElementById('out-current').innerHTML   = _pendingHtml;
+    document.getElementById('out-after').innerHTML     = _pendingHtml;
+    document.getElementById('out-allocated').innerHTML = _pendingHtml;
+    document.getElementById('out-leftover').innerHTML  = _pendingHtml;
+    document.getElementById('fee-stat-box').style.display = 'none';
+    const barsEl = document.getElementById('sleeve-bars');
+    barsEl.innerHTML = '';
+    SLEEVES.forEach(s => {
+      const wrap = document.createElement('div');
+      wrap.className = 'sleeve-bar-wrap';
+      wrap.innerHTML = `
+        <div class="sleeve-bar-head">
+          <span class="name">${sleeveTag(s)}</span>
+          <span class="pct" style="color:var(--muted);">target ${s.target}% · ↻ rates pending</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-current" style="width:0%;background:${s.color};"></div>
+          <div class="bar-target-marker" style="left:${Math.min(100,s.target)}%"></div>
+        </div>`;
+      barsEl.appendChild(wrap);
+    });
+    const planEl = document.getElementById('plan-body');
+    planEl.innerHTML = '';
+    SLEEVES.forEach(s => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${sleeveTag(s)}</td>
+        <td style="color:var(--muted);">↻</td>
+        <td style="color:var(--muted);">↻</td>
+        <td>${s.target}%</td>
+        <td style="color:var(--muted);">—</td>
+        <td style="color:var(--muted);">↻ pending</td>`;
+      planEl.appendChild(tr);
+    });
+    const tickerPlanEl = document.getElementById('ticker-plan-body');
+    tickerPlanEl.innerHTML = '';
+    holdings.filter(h => SLEEVES.find(s => s.key === h.sleeveKey && !s.isCash)).forEach(h => {
+      const sleeve = SLEEVES.find(s => s.key === h.sleeveKey);
+      const currLabel = h.currency !== FX_BASE
+        ? `<span style="color:var(--gold);font-size:9px;">${escHtml(h.currency)}</span>`
+        : `<span style="color:var(--muted);font-size:9px;">${escHtml(h.currency)}</span>`;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="color:var(--text);font-weight:600;">${escHtml(h.ticker)}</td>
+        <td>${sleeve ? sleeveTag(sleeve) : h.sleeveKey}</td>
+        <td>${currLabel}</td>
+        <td style="color:var(--muted);">↻</td>
+        <td>—</td>
+        <td style="color:var(--muted);">↻</td>
+        <td style="color:var(--muted);">↻ pending</td>`;
+      tickerPlanEl.appendChild(tr);
+    });
+    document.getElementById('note-block').innerHTML =
+      `<span>// ALLOCATION BLOCKED</span><br>Missing FX rates prevent allocation. Enter rates manually in the FX panel above, or click ↻ Refresh Rates.`;
+    return;
+  }
+
+  // ── ALLOCATION ENGINE — Stage 3b: fully BASE-currency, multi-pass ──
+  // Gate above guarantees all active rates are present (no nulls). existingCash / newCash are always base.
+  // cur[sleeve] sums h.valueBase (BASE). Every target-dollar, cap-room, and overshoot figure is in BASE.
+  // Unit counting in the rounding gate converts BASE → native → floor(÷nativePrice) → back to BASE.
+
+  // curInitial: pre-deploy sleeve values saved for display ("Current %" column).
+  // cur: mutable working copy updated between passes to reflect executed trades.
+  const curInitial = {};
+  SLEEVES.forEach(s => { curInitial[s.key] = 0; });
+  if (cashSleeve) curInitial[cashSleeve.key] = existingCash;
+  holdings.forEach(h => { if (curInitial[h.sleeveKey] !== undefined) curInitial[h.sleeveKey] += h.valueBase; });
+
+  // totalNowBase / totalAfterBase are non-null here (gate passed).
+  const totalNow   = totalNowBase;    // BASE
+  const totalAfter = totalAfterBase;  // BASE  — computed ONCE, never recomputed inside the loop
+
+  const cashPct        = totalAfter > 0 ? (existingCash / totalAfter) * 100 : 0;
+  const cashTargetPct  = cashSleeve ? cashSleeve.target : 0;
+  const cashLowThresh  = 1;
+  const cashHighThresh = cashTargetPct;
+
+  // ── Multi-pass accumulators ──
+  const cumulativeUnits    = {};
+  const cumulativeBuyBase  = {};
+  const cumulativeSleeveBuy = {};
+  const feesPaidTickers    = new Set();
+  holdings.forEach(h => { cumulativeUnits[h.ticker] = 0; cumulativeBuyBase[h.ticker] = 0; });
+  SLEEVES.forEach(s => { cumulativeSleeveBuy[s.key] = 0; });
+
+  const allCutTickers      = [];
+  const allTickerRoundedUp = {};
+
+  // ── Convergence threshold: smallest whole-unit ticker price in BASE ──
+  const wholePrices   = holdings.filter(h => !h.fractionable && h.price > 0).map(h => toBase(h.price, h.currency) || Infinity);
+  const minUnitPrice  = wholePrices.length > 0 ? Math.min(...wholePrices) : Infinity;
+  const loopThreshold = isFinite(minUnitPrice) ? minUnitPrice - EPSILON : EPSILON;
+
+  const cur = { ...curInitial };  // mutable working copy
+
+  let passRemaining        = newCash;
+  let prevRemaining        = newCash + 1;  // sentinel so first pass always runs
+  let totalCashReserve     = 0;
+  let totalCutLeftover     = 0;
+  let totalFeeFromReserve  = 0;
+  let totalFeeFromExisting = 0;
+  let totalFeeFromStocks   = 0;
+  let passCount            = 0;
+  const MAX_PASSES         = 10;
+
+  for (let pass = 0; pass < MAX_PASSES; pass++) {
+    if (passRemaining <= loopThreshold) break;
+    if (passRemaining >= prevRemaining - EPSILON && pass > 0) break;
+    prevRemaining = passRemaining;
+    passCount++;
+
+    // ── Per-pass sleeve allocation ──
+    const buy = {};
+    SLEEVES.forEach(s => { buy[s.key] = 0; });
+    let remaining   = passRemaining;
+    let cashReserve = 0;
+
+    // Cash floor reserve: only on pass 0 (existingCash is constant; condition doesn't change)
+    if (pass === 0 && cashSleeve && cashPct < cashLowThresh && cashPct < cashTargetPct) {
+      const cashFloor  = totalAfter * (cashLowThresh / 100);
+      const cashNeeded = Math.max(0, cashFloor - existingCash);
+      cashReserve = Math.min(remaining, cashNeeded);
+      buy[cashSleeve.key] = cashReserve;
+      remaining -= cashReserve;
+    }
+
+    if (remaining > 0 && pass === 0) {
+      const need = {};
+      let totalNeed = 0;
+      nonCash.forEach(s => {
+        const n = Math.max(0, totalAfter * (s.target / 100) - cur[s.key]);
+        need[s.key] = n; totalNeed += n;
+      });
+
+      if (totalNeed > 0) {
+        if (remaining >= totalNeed) {
+          nonCash.forEach(s => { buy[s.key] = need[s.key]; });
+          let afterFill = remaining - totalNeed;
+          if (pass === 0 && cashSleeve && cashPct >= cashLowThresh && cashPct < cashHighThresh && afterFill > 0) {
+            const cashNeeded = Math.max(0, totalAfter * (cashTargetPct / 100) - existingCash);
+            const cashTopUp  = Math.min(afterFill, cashNeeded);
+            buy[cashSleeve.key] = (buy[cashSleeve.key] || 0) + cashTopUp;
+            cashReserve += cashTopUp;
+            afterFill   -= cashTopUp;
+          }
+          if (afterFill > 0) {
+            const investSum = nonCash.reduce((a,s)=>a+s.target,0) || 1;
+            nonCash.forEach(s => { buy[s.key] += afterFill * (s.target / investSum); });
+          }
+          remaining = 0;
+        } else {
+          nonCash.forEach(s => { buy[s.key] = remaining * (need[s.key] / totalNeed); });
+          remaining = 0;
+        }
+      } else {
+        if (pass === 0 && cashSleeve && cashPct < cashHighThresh) {
+          const cashNeeded = Math.max(0, totalAfter * (cashTargetPct / 100) - existingCash);
+          const cashTopUp  = Math.min(remaining, cashNeeded);
+          buy[cashSleeve.key] = (buy[cashSleeve.key] || 0) + cashTopUp;
+          cashReserve += cashTopUp;
+          remaining   -= cashTopUp;
+        }
+        if (remaining > 0 && nonCash.length > 0) {
+          const investSum = nonCash.reduce((a,s)=>a+s.target,0) || 1;
+          nonCash.forEach(s => { buy[s.key] += remaining * (s.target / investSum); });
+          remaining = 0;
+        }
+      }
+    }
+
+    if (remaining > 0 && pass > 0) {
+      // ── Smart allocation for pass 2+: gap-weighted, absorbable sleeves only ──
+
+      // Step 1: compute gap for each non-cash sleeve
+      // gap = target% − current% (always positive if sleeve is under target)
+      const gap = {};
+      nonCash.forEach(s => {
+        const curPct = totalAfter > 0 ? (cur[s.key] / totalAfter) * 100 : 0;
+        gap[s.key] = Math.max(0, s.target - curPct);
+      });
+
+      // Step 2: identify absorbable sleeves
+      // A sleeve is absorbable if it has at least one ticker that can absorb funds:
+      //   - fractionable: always absorbable (any amount works)
+      //   - whole-unit: absorbable if capRoom > 0 AND toBase(price, currency) <= sleeveShare
+      // We use an iterative check: first pass with equal share, refine once.
+      const sleeveMinCost = {};  // minimum BASE cost to buy one unit in this sleeve
+      nonCash.forEach(s => {
+        const sleeveHoldings = holdings.filter(h => h.sleeveKey === s.key);
+        let minCost = Infinity;
+        sleeveHoldings.forEach(h => {
+          if (h.price <= 0) return;
+          const capRoom = h.maxPct !== null
+            ? Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase - (cumulativeBuyBase[h.ticker] || 0))
+            : Infinity;
+          if (capRoom <= 0) return;  // fully capped
+          if (h.fractionable) {
+            minCost = 0;  // fractionable: any amount is fine
+          } else {
+            const unitCostBase = toBase(h.price, h.currency) || Infinity;
+            if (unitCostBase < minCost) minCost = unitCostBase;
+          }
+        });
+        sleeveMinCost[s.key] = minCost;
+      });
+
+      // Step 3: gap-weighted distribution — iterative, excluding sleeves that can't absorb
+      let pool = remaining;
+      let eligible = nonCash.filter(s => gap[s.key] > 0 && sleeveMinCost[s.key] < Infinity);
+
+      // If no sleeve has gap > 0 but some can still absorb (all at/above target),
+      // fall back to all sleeves with absorbable tickers, weighted by target%
+      if (eligible.length === 0) {
+        eligible = nonCash.filter(s => sleeveMinCost[s.key] < Infinity);
+      }
+
+      // If still nothing absorbable, leave remaining unchanged (will become Cash Left)
+      if (eligible.length > 0) {
+        let iter = 20;
+        while (pool > 0.01 && eligible.length > 0 && iter-- > 0) {
+          // Weight = gap (or target% as fallback)
+          const totalWeight = eligible.reduce((sum, s) => sum + (gap[s.key] || s.target), 0) || 1;
+          let overflow = 0;
+          const nextEligible = [];
+
+          eligible.forEach(s => {
+            const weight = (gap[s.key] || s.target) / totalWeight;
+            const share  = pool * weight;
+            const minCost = sleeveMinCost[s.key];
+
+            if (share < minCost) {
+              // This sleeve can't absorb its share — overflow it
+              overflow += share;
+            } else {
+              buy[s.key] = (buy[s.key] || 0) + share;
+              nextEligible.push(s);
+            }
+          });
+
+          pool = overflow;
+          eligible = nextEligible;
+
+          // Recheck: if remaining pool is now large enough for previously excluded sleeves,
+          // add them back. Recompute eligible from scratch with updated pool.
+          if (overflow > 0) {
+            eligible = nonCash.filter(s =>
+              sleeveMinCost[s.key] < Infinity &&
+              sleeveMinCost[s.key] <= pool * ((gap[s.key] || s.target) /
+                (nonCash.reduce((sum, sx) => sum + (gap[sx.key] || sx.target), 0) || 1))
+            );
+          }
+        }
+        // ── Full-pool fallback: if pool remains and no sleeve got its share,
+        //    give the entire pool to whichever sleeve can absorb it ──
+        if (pool > 0.01) {
+          // Find sleeve with largest gap that can absorb the full pool
+          let fallbackSleeve = null;
+          let fallbackGap    = -Infinity;
+          nonCash.forEach(s => {
+            if (sleeveMinCost[s.key] > pool) return; // can't absorb even 1 unit
+            const g = gap[s.key] || s.target;
+            if (g > fallbackGap) { fallbackGap = g; fallbackSleeve = s; }
+          });
+          if (fallbackSleeve) {
+            buy[fallbackSleeve.key] = (buy[fallbackSleeve.key] || 0) + pool;
+            pool = 0;
+          }
+        }
+        remaining = pool;
+      }
+      // (if eligible was empty, remaining stays unchanged → Cash Left)
+    }
+
+    // ─── Ticker-level allocation ───
+    const tickerBuy      = {};
+    const tickerUnits    = {};
+    const tickerRoundedUp = {};
+
+    nonCash.forEach(s => {
+      const sleeveHoldings = holdings.filter(h => h.sleeveKey === s.key);
+      if (!sleeveHoldings.length) return;
+
+      let pool = buy[s.key];
+      const alloc = {};
+      sleeveHoldings.forEach(h => { alloc[h.ticker] = 0; });
+      let eligible = [...sleeveHoldings];
+      let maxIter = 20;
+      while (pool > 0.01 && eligible.length > 0 && maxIter-- > 0) {
+        const perTicker = pool / eligible.length;
+        let overflow = 0;
+        const nextEligible = [];
+        eligible.forEach(h => {
+          if (h.maxPct !== null) {
+            const room = Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase - alloc[h.ticker]);
+            if (room <= 0)             { overflow += perTicker; }
+            else if (perTicker > room) { alloc[h.ticker] += room; overflow += (perTicker - room); }
+            else                       { alloc[h.ticker] += perTicker; nextEligible.push(h); }
+          } else {
+            alloc[h.ticker] += perTicker;
+            nextEligible.push(h);
+          }
+        });
+        pool = overflow;
+        eligible = nextEligible;
+      }
+      // Return cap overflow to remaining so the next pass can re-deploy it
+      // to other sleeves that still have room. Without this, any pool left
+      // when eligible empties (all tickers at maxPct) is silently lost.
+      if (pool > 0.001) remaining += pool;
+
+      const recyclePool = applyWholeUnitRoundingGate(
+        sleeveHoldings, alloc, 0, totalAfter, overshootTol, tickerRoundedUp, EPSILON
+      );
+
+      if (recyclePool > 0.001) {
+        let fracPool = recyclePool;
+        let fracElig = sleeveHoldings.filter(h => {
+          if (!h.fractionable) return false;
+          if (h.maxPct === null) return true;
+          return Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase - alloc[h.ticker]) > 0.001;
+        });
+        let fracIter = 20;
+        while (fracPool > 0.001 && fracElig.length > 0 && fracIter-- > 0) {
+          const perFrac = fracPool / fracElig.length;
+          let fracOverflow = 0;
+          const nextFracElig = [];
+          fracElig.forEach(h => {
+            if (h.maxPct !== null) {
+              const room = Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase - alloc[h.ticker]);
+              if (room <= 0)           { fracOverflow += perFrac; }
+              else if (perFrac > room) { alloc[h.ticker] += room; fracOverflow += (perFrac - room); }
+              else                     { alloc[h.ticker] += perFrac; nextFracElig.push(h); }
+            } else {
+              alloc[h.ticker] += perFrac;
+              nextFracElig.push(h);
+            }
+          });
+          fracPool = fracOverflow;
+          fracElig = nextFracElig;
+        }
+        if (fracPool > 0.001) {
+          // Pass 2+: try to concentrate fracPool on most expensive affordable whole-unit ticker
+          // rather than losing it to Cash Left.
+          let concentrated = false;
+          if (pass > 0) {
+            let bestH    = null;
+            let bestCost = 0;
+            sleeveHoldings.forEach(h => {
+              if (h.fractionable || h.price <= 0) return;
+              const unitCostBase = toBase(h.price, h.currency) || Infinity;
+              if (unitCostBase > fracPool) return; // can't afford 1 unit
+              const capRoom = h.maxPct !== null
+                ? Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase
+                    - (cumulativeBuyBase[h.ticker] || 0) - (alloc[h.ticker] || 0))
+                : Infinity;
+              if (capRoom <= 0) return;
+              if (unitCostBase > bestCost) { bestCost = unitCostBase; bestH = h; }
+            });
+            if (bestH) {
+              const capRoom = bestH.maxPct !== null
+                ? Math.max(0, totalAfter * (bestH.maxPct / 100) - bestH.valueBase
+                    - (cumulativeBuyBase[bestH.ticker] || 0) - (alloc[bestH.ticker] || 0))
+                : Infinity;
+              const canAdd = Math.min(fracPool, capRoom);
+              alloc[bestH.ticker] = (alloc[bestH.ticker] || 0) + canAdd;
+              const leftover = fracPool - canAdd;
+              if (leftover > 0.001) remaining += leftover;
+              concentrated = true;
+            }
+          }
+          if (!concentrated) remaining += fracPool;
+        }
+      }
+
+      sleeveHoldings.forEach(h => {
+        if (h.price > 0 && alloc[h.ticker] > 0) {
+          // alloc is in BASE; convert to native for share counting
+          const allocNative = fromBase(alloc[h.ticker], h.currency);
+          tickerUnits[h.ticker] = h.fractionable
+            ? allocNative / h.price
+            : Math.floor(allocNative / h.price);
+        } else {
+          tickerUnits[h.ticker] = 0;
+        }
+        const finalBase = h.fractionable
+          ? alloc[h.ticker]
+          : toBase(tickerUnits[h.ticker] * h.price, h.currency);
+        tickerBuy[h.ticker] = (tickerBuy[h.ticker] || 0) + (finalBase ?? 0);  // BASE
+      });
+
+      // Reconcile sleeve buy total to match actual post-rounding ticker purchases.
+      buy[s.key] = sleeveHoldings.reduce((sum, h) => sum + (tickerBuy[h.ticker] || 0), 0);
+    });
+
+    // ─── Version B trade-cutting loop ───
+    let cutLeftover = 0;
+    const cutTickers = [];
+
+    if (versionB && feeBudget > 0) {
+      const computeTotalFees = () => {
+        let f = 0;
+        Object.values(tickerBuy).forEach(amt => {
+          if (amt > 0.001) f += fixedFee + (pctFee / 100) * amt;
+        });
+        return f;
+      };
+
+      let currentFees = computeTotalFees();
+
+      while (currentFees > feeBudget) {
+        const activeTrades = Object.entries(tickerBuy)
+          .filter(([, amt]) => amt > 0.001)
+          .sort(([, a], [, b]) => a - b);
+
+        if (activeTrades.length <= 1) break;
+
+        const [smallestTicker, smallestAmt] = activeTrades[0];
+
+        tickerBuy[smallestTicker]   = 0;
+        tickerUnits[smallestTicker] = 0;
+        cutTickers.push(smallestTicker);
+
+        const cancelledH      = holdings.find(h => h.ticker === smallestTicker);
+        const sleeveSurvivors = cancelledH
+          ? holdings.filter(h => h.sleeveKey === cancelledH.sleeveKey && tickerBuy[h.ticker] > 0.001)
+          : [];
+
+        if (sleeveSurvivors.length === 0) {
+          cutLeftover += smallestAmt;
+        } else {
+          let pool = smallestAmt;
+          const addAlloc = {};
+          sleeveSurvivors.forEach(h => { addAlloc[h.ticker] = 0; });
+          let eligib = [...sleeveSurvivors];
+          let itr = 20;
+          while (pool > 0.01 && eligib.length > 0 && itr-- > 0) {
+            const perT = pool / eligib.length;
+            let overflow = 0;
+            const nextEligib = [];
+            eligib.forEach(h => {
+              if (h.maxPct !== null) {
+                const room = Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase - tickerBuy[h.ticker] - addAlloc[h.ticker]);
+                if (room <= 0)        { overflow += perT; }
+                else if (perT > room) { addAlloc[h.ticker] += room; overflow += (perT - room); }
+                else                  { addAlloc[h.ticker] += perT; nextEligib.push(h); }
+              } else {
+                addAlloc[h.ticker] += perT;
+                nextEligib.push(h);
+              }
+            });
+            pool = overflow;
+            eligib = nextEligib;
+          }
+          cutLeftover += pool;
+
+          const newTotals = {};
+          sleeveSurvivors.forEach(h => { newTotals[h.ticker] = tickerBuy[h.ticker] + addAlloc[h.ticker]; });
+
+          const roundRemainder = applyWholeUnitRoundingGate(
+            sleeveSurvivors, newTotals, 0, totalAfter, overshootTol, tickerRoundedUp, EPSILON
+          );
+
+          sleeveSurvivors.forEach(h => {
+            if (h.price > 0) {
+              const nativeAmt = fromBase(newTotals[h.ticker], h.currency);
+              if (!h.fractionable) {
+                tickerUnits[h.ticker]  = Math.floor(nativeAmt / h.price);
+                const syncedBase       = toBase(tickerUnits[h.ticker] * h.price, h.currency);  // BASE
+                const syncFraction     = newTotals[h.ticker] - (syncedBase ?? newTotals[h.ticker]);
+                if (syncFraction > 0) cutLeftover += syncFraction;
+                tickerBuy[h.ticker]    = syncedBase ?? 0;  // BASE
+              } else {
+                tickerUnits[h.ticker] = nativeAmt / h.price;
+                tickerBuy[h.ticker]   = newTotals[h.ticker];  // BASE
+              }
+            } else {
+              tickerUnits[h.ticker] = 0;
+              tickerBuy[h.ticker]   = 0;
+            }
+          });
+
+          if (roundRemainder > 0.001) {
+            let fracSurv = sleeveSurvivors.filter(h => {
+              if (!h.fractionable) return false;
+              if (h.maxPct === null) return true;
+              return Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase - tickerBuy[h.ticker]) > 0.001;
+            });
+            let fPool = roundRemainder;
+            let fIter = 20;
+            while (fPool > 0.001 && fracSurv.length > 0 && fIter-- > 0) {
+              const perFrac = fPool / fracSurv.length;
+              let fOverflow = 0;
+              const nextFrac = [];
+              fracSurv.forEach(h => {
+                if (h.maxPct !== null) {
+                  const room = Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase - tickerBuy[h.ticker]);
+                  if (room <= 0)            { fOverflow += perFrac; }
+                  else if (perFrac > room)  { tickerBuy[h.ticker] += room; fOverflow += (perFrac - room); }
+                  else                      { tickerBuy[h.ticker] += perFrac; nextFrac.push(h); }
+                } else {
+                  tickerBuy[h.ticker] += perFrac;
+                  nextFrac.push(h);
+                }
+              });
+              fPool = fOverflow;
+              fracSurv = nextFrac;
+            }
+            sleeveSurvivors.filter(h => h.fractionable && h.price > 0).forEach(h => {
+              tickerUnits[h.ticker] = fromBase(tickerBuy[h.ticker], h.currency) / h.price;
+            });
+            cutLeftover += fPool;
+          }
+        }
+
+        const newFees = computeTotalFees();
+        if (newFees >= currentFees) break;
+        currentFees = newFees;
+      }
+    }
+
+    // ─── Fee computation + cascade ───
+    let passTotalFees   = 0;
+    let feeFromReserve  = 0;
+    let feeFromExisting = 0;
+    let feeFromStocks   = 0;
+
+    if (hasFees) {
+      Object.values(tickerBuy).forEach(amt => {
+        if (amt > 0.001) passTotalFees += fixedFee + (pctFee / 100) * amt;
+      });
+
+      if (passTotalFees > 0) {
+        feeFromReserve = Math.min(passTotalFees, cashReserve);
+        let feesLeft = passTotalFees - feeFromReserve;
+
+        if (feesLeft > 0) {
+          const avail = Math.max(0, existingCash - EPSILON);
+          feeFromExisting = Math.min(feesLeft, avail);
+          feesLeft -= feeFromExisting;
+        }
+
+        if (feesLeft > 0) {
+          const totalStockBuy = Object.values(tickerBuy).reduce((a,b)=>a+b,0);
+          const canRaid = Math.max(0, totalStockBuy - EPSILON);
+          feeFromStocks = Math.min(feesLeft, canRaid);
+          if (feeFromStocks > 0 && totalStockBuy > EPSILON) {
+            const scale = (totalStockBuy - feeFromStocks) / totalStockBuy;
+            Object.keys(tickerBuy).forEach(ticker => {
+              tickerBuy[ticker] *= scale;
+              const h = holdings.find(h2 => h2.ticker === ticker);
+              if (h && h.price > 0 && tickerBuy[ticker] > 0) {
+                if (!h.fractionable) {
+                  // tickerBuy is in BASE after fee-raid scaling; convert to native for unit floor
+                  const nativeScaled     = fromBase(tickerBuy[ticker], h.currency);
+                  tickerUnits[ticker]    = Math.floor(nativeScaled / h.price);
+                  const roundedDownBase  = toBase(tickerUnits[ticker] * h.price, h.currency);  // BASE
+                  const feeFraction      = (tickerBuy[ticker] ?? 0) - (roundedDownBase ?? 0);
+                  if (feeFraction > 0) remaining += feeFraction;
+                  tickerBuy[ticker]      = roundedDownBase;  // BASE
+                } else {
+                  tickerUnits[ticker] = fromBase(tickerBuy[ticker], h.currency) / h.price;
+                }
+              } else {
+                tickerUnits[ticker] = 0;
+                tickerBuy[ticker]   = 0;
+              }
+            });
+          }
+        }
+      }
+    }
+
+    // ── Merge this pass into cumulatives ──
+    holdings.forEach(h => {
+      const units = tickerUnits[h.ticker] || 0;
+      const buyB  = tickerBuy[h.ticker]   || 0;
+      if (units > 0 || buyB > 0) feesPaidTickers.add(h.ticker);
+      cumulativeUnits[h.ticker]   += units;
+      cumulativeBuyBase[h.ticker] += buyB;
+    });
+    Object.keys(tickerRoundedUp).forEach(t => { if (tickerRoundedUp[t]) allTickerRoundedUp[t] = true; });
+    cutTickers.forEach(t => { if (!allCutTickers.includes(t)) allCutTickers.push(t); });
+    nonCash.forEach(s => { cumulativeSleeveBuy[s.key] += buy[s.key]; });
+    totalCashReserve     += cashReserve;
+    totalCutLeftover     += cutLeftover;
+    totalFeeFromReserve  += feeFromReserve;
+    totalFeeFromExisting += feeFromExisting;
+    totalFeeFromStocks   += feeFromStocks;
+
+    // ── Update cur[] for next pass (simulate trade execution) ──
+    holdings.forEach(h => {
+      const buyB = tickerBuy[h.ticker] || 0;
+      if (buyB > 0 && cur[h.sleeveKey] !== undefined) cur[h.sleeveKey] += buyB;
+    });
+
+    passRemaining = remaining;
+  }
+
+  // ── Recompute total fees from cumulative amounts (one fixed fee per ticker) ──
+  let totalFees = 0;
+  if (hasFees) {
+    feesPaidTickers.forEach(ticker => {
+      const amt = cumulativeBuyBase[ticker] || 0;
+      if (amt > 0.001) totalFees += fixedFee + (pctFee / 100) * amt;
+    });
+  }
+
+  const allocated     = Object.values(cumulativeBuyBase).reduce((a, b) => a + b, 0);
+  const leftover      = passRemaining;
+  const finalLeftover = passRemaining + totalCashReserve + totalCutLeftover;
+
+  // ─── BASE reconciliation (Stage 3b) ───
+  // Conservation: every dollar of newCash ends up in one of five buckets:
+  //   allocated        — stocks purchased (already reduced by feeFromStocks)
+  //   totalCashReserve — full cashReserve amount (feeFromReserve is internal to it)
+  //   totalCutLeftover — Version B cut money that couldn't redistribute
+  //   passRemaining    — true undeployed leftover after all passes
+  //   totalFeeFromStocks — fees raided from stock allocation (not in allocated, not in remaining)
+  // Note: totalFeeFromExisting is paid from existingCash (not newCash) — excluded.
+  {
+    const totalOut = allocated + totalCashReserve + totalCutLeftover + passRemaining + totalFeeFromStocks;
+    console.assert(Math.abs(totalOut - newCash) < Math.max(EPSILON * 100, loopThreshold + 1),
+      `[3b reconcile] out=${totalOut.toFixed(4)} newCash=${newCash.toFixed(4)} diff=${(totalOut-newCash).toFixed(6)}`);
+  }
+
+  // ─── UI: summary stats (Portfolio Value / After Deploy use base-converted totals) ───
+  // After the gate, totalNowBase / totalAfterBase are guaranteed non-null.
+  document.getElementById('out-current').textContent   = fmt(totalNowBase);
+  document.getElementById('out-after').textContent     = fmt(totalAfterBase);
+  document.getElementById('out-allocated').textContent = fmt(allocated);
+  document.getElementById('out-leftover').textContent  = fmt(finalLeftover);
+
+  const feeStatBox = document.getElementById('fee-stat-box');
+  if (hasFees && totalFees > 0) {
+    feeStatBox.style.display = '';
+    document.getElementById('out-fees').textContent = fmt(totalFees, 2);
+  } else {
+    feeStatBox.style.display = 'none';
+  }
+
+  // ─── Bars (curInitial and totalNow are both BASE — correct pre-deploy percentages) ───
+  const barsEl = document.getElementById('sleeve-bars');
+  barsEl.innerHTML = '';
+  SLEEVES.forEach(s => {
+    const curPct = totalNow > 0 ? (curInitial[s.key] / totalNow) * 100 : 0;
+    const wrap = document.createElement('div');
+    wrap.className = 'sleeve-bar-wrap';
+    wrap.innerHTML = `
+      <div class="sleeve-bar-head">
+        <span class="name">${sleeveTag(s)}</span>
+        <span class="pct">${curPct.toFixed(1)}% → target ${s.target}%</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-current" style="width:${Math.min(100,curPct)}%;background:${s.color};"></div>
+        <div class="bar-target-marker" style="left:${Math.min(100,s.target)}%"></div>
+      </div>`;
+    barsEl.appendChild(wrap);
+  });
+
+  // ─── Sleeve plan table ───
+  const planEl = document.getElementById('plan-body');
+  planEl.innerHTML = '';
+  SLEEVES.forEach(s => {
+    const curPct = totalNow > 0 ? (curInitial[s.key] / totalNow) * 100 : 0;
+    const gap    = s.target - curPct;
+    let buyDisplay;
+    if (s.isCash) {
+      buyDisplay = totalCashReserve > 0.5
+        ? `<span class="buy-amt">${fmt(totalCashReserve)} <span style="color:var(--muted);font-weight:400;">(reserve)</span></span>`
+        : '<span class="zero-amt">—</span>';
+    } else {
+      buyDisplay = cumulativeSleeveBuy[s.key] > 0.5
+        ? `<span class="buy-amt">${fmt(cumulativeSleeveBuy[s.key])}</span>`
+        : '<span class="zero-amt">—</span>';
+    }
+    // cur[s.key] is already updated with all pass buys; use it directly for afterPct
+    const afterPct = totalAfter > 0
+      ? (s.isCash ? (existingCash + totalCashReserve) : cur[s.key]) / totalAfter * 100 : 0;
+    const afterColor = Math.abs(afterPct - s.target) < 0.5 ? 'var(--green)' : afterPct > s.target ? 'var(--red)' : 'var(--gold)';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${sleeveTag(s)}</td>
+      <td>${curPct.toFixed(1)}%</td>
+      <td style="color:${afterColor};font-weight:600;">${afterPct.toFixed(1)}%</td>
+      <td>${s.target}%</td>
+      <td style="color:${gap>0.05?'var(--green)':'var(--muted)'}">${gap>0?'+':''}${gap.toFixed(1)}%</td>
+      <td>${buyDisplay}</td>`;
+    planEl.appendChild(tr);
+  });
+
+  // ─── Ticker breakdown table ───
+  const tickerPlanEl = document.getElementById('ticker-plan-body');
+  tickerPlanEl.innerHTML = '';
+  const investHoldings = holdings.filter(h => SLEEVES.find(s => s.key === h.sleeveKey && !s.isCash));
+  investHoldings.forEach(h => {
+    const sleeve       = SLEEVES.find(s => s.key === h.sleeveKey);
+    const curPct       = totalNow > 0 ? (h.valueBase / totalNow) * 100 : 0;  // BASE / BASE
+    const buyAmtBase   = cumulativeBuyBase[h.ticker] || 0;    // BASE
+    // Convert BASE buy to native for broker-facing display
+    const buyAmtNative = buyAmtBase > 0 ? (fromBase(buyAmtBase, h.currency) || 0) : 0;
+    const units        = cumulativeUnits[h.ticker]   || 0;
+    const roundedUp    = allTickerRoundedUp[h.ticker] || false;
+    const wasCut       = allCutTickers.includes(h.ticker);
+    const atCap        = h.maxPct !== null && curPct >= h.maxPct - 0.05;
+    const maxDisplay   = h.maxPct !== null
+      ? `<span style="color:${atCap ? 'var(--red)' : 'var(--purple)'};">${h.maxPct}%${atCap ? ' ⚠' : ''}</span>`
+      : '<span class="zero-amt">—</span>';
+    // $ To Buy shown in native currency (what you actually execute at the broker)
+    const buyDisplay = wasCut
+      ? `<span style="color:var(--muted);text-decoration:line-through;">cut</span>`
+      : buyAmtNative > 0.01
+        ? `<span class="buy-amt">${fmtNative(buyAmtNative, h.currency, 2)}</span>`
+        : '<span class="zero-amt">—</span>';
+    const fracLabel = h.fractionable ? '<span style="color:var(--blue);font-size:9px;">FRAC</span>' : '';
+    const currLabel = h.currency !== FX_BASE
+      ? `<span style="color:var(--gold);font-size:9px;">${escHtml(h.currency)}</span>`
+      : `<span style="color:var(--muted);font-size:9px;">${escHtml(h.currency)}</span>`;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:${wasCut?'var(--muted)':'var(--text)'};font-weight:600;${wasCut?'text-decoration:line-through;':''}">${h.ticker} ${fracLabel}</td>
+      <td>${sleeve ? sleeveTag(sleeve) : h.sleeveKey}</td>
+      <td>${currLabel}</td>
+      <td>${curPct.toFixed(1)}%</td>
+      <td>${maxDisplay}</td>
+      <td>${wasCut ? '<span class="zero-amt">cut</span>' : fmtUnits(units, h.fractionable, roundedUp)}</td>
+      <td>${buyDisplay}</td>`;
+    tickerPlanEl.appendChild(tr);
+  });
+
+  // ─── Note block ───
+  const under  = nonCash.filter(s => {
+    const curPct = totalNow > 0 ? (curInitial[s.key] / totalNow) * 100 : 0;
+    return (s.target - curPct) > 0.1;
+  }).map(s => s.name);
+
+  const capped = investHoldings.filter(h =>
+    h.maxPct !== null && totalNow > 0 && (h.valueBase/totalNow)*100 >= h.maxPct - 0.05
+  ).map(h => h.ticker);
+
+  let cashStatus;
+  if (!cashSleeve)
+    cashStatus = '';
+  else if (cashPct >= cashHighThresh)
+    cashStatus = `Cash at ${cashPct.toFixed(1)}% — at/above target (${cashTargetPct}%), no top-up.`;
+  else if (cashPct >= cashLowThresh)
+    cashStatus = `Cash at ${cashPct.toFixed(1)}% (between 1% floor and ${cashTargetPct}% target) — securities funded first, cash topped up last from leftover only.`;
+  else
+    cashStatus = `Cash critically low at ${cashPct.toFixed(1)}% (below 1% floor) — funded to 1% floor first (${fmt(totalCashReserve,2)}), rest to securities.`;
+
+  let note = `<span>// LOGIC</span><br>Buy-only. Securities funded first. Cash: hard 1% floor, ceiling = ${cashTargetPct}% target.<br>${cashStatus}<br><br>`;
+  note += under.length
+    ? `<span>// FOCUS</span><br>Deploying to: ${under.join(', ')} (below target).<br>`
+    : `<span>// FOCUS</span><br>Invested sleeves at/above target — spreading by weight.<br>`;
+  if (capped.length)
+    note += `<br><span>// CAPS ACTIVE</span><br>${capped.join(', ')} at or above Max % cap — money redirected to uncapped siblings.`;
+  if (leftover > 1)
+    note += `<br><span>// NOTE</span><br>${fmt(leftover)} unallocated — all sleeves over-weight, can't absorb without selling.`;
+  if (passCount > 1)
+    note += `<br><span>// MULTI-PASS</span><br>Ran ${passCount} allocation passes to deploy rounding fractions.`;
+
+  if (hasFees && totalFees > 0) {
+    note += `<br><br><span>// FEES</span><br>`;
+    note += `Total fees: ${fmt(totalFees, 2)} across ${feesPaidTickers.size} trades.<br>`;
+    const parts = [];
+    if (totalFeeFromReserve  > 0.001) parts.push(`${fmt(totalFeeFromReserve,  2)} from cash reserve`);
+    if (totalFeeFromExisting > 0.001) parts.push(`${fmt(totalFeeFromExisting, 2)} from existing cash`);
+    if (totalFeeFromStocks   > 0.001) parts.push(`${fmt(totalFeeFromStocks,   2)} raided from stock allocation`);
+    note += parts.length ? parts.join(' → ') + '.' : 'covered fully by cash.';
+    if (totalFeeFromStocks > 0.001)
+      note += `<br><span style="color:var(--red);">⚠ Stock positions reduced to cover fee shortfall.</span>`;
+  }
+
+  const roundedUpList = Object.keys(allTickerRoundedUp).filter(t => allTickerRoundedUp[t] && !allCutTickers.includes(t));
+  if (roundedUpList.length > 0) {
+    note += `<br><br><span>// ROUND-UP (Req 14)</span><br>`;
+    note += `Rounded to next whole unit (remainder ≥ 0.5, within ${overshootTol.toFixed(1)}% tolerance): ${roundedUpList.join(', ')}. `;
+    note += `▲ marker shown in Units column.`;
+  }
+
+  if (versionB) {
+    note += `<br><br><span>// TRADE-CUTTING (Version B)</span><br>`;
+    if (feeBudget <= 0) {
+      note += `Fee budget not set — cutting inactive.`;
+    } else if (allCutTickers.length === 0) {
+      note += `No cuts needed — total fees already within ${fmt(feeBudget, 2)} budget.`;
+    } else {
+      const activeCount = Object.values(cumulativeBuyBase).filter(a => a > 0.001).length;
+      note += `Budget: ${fmt(feeBudget, 2)}. Cut ${allCutTickers.length} trade${allCutTickers.length!==1?'s':''}: ${allCutTickers.join(', ')}. `;
+      note += `${activeCount} trade${activeCount!==1?'s':''} survive.`;
+      if (totalCutLeftover > 0.01)
+        note += `<br>${fmt(totalCutLeftover, 2)} could not be redistributed (survivors capped) — added to leftover.`;
+    }
+  } else {
+    note += `<br><br><span>// MODE</span><br>Version A — accuracy-first. No trades cut. ${
+      overshootTol > 0
+        ? `Round-up tolerance: ${overshootTol.toFixed(1)}%.`
+        : 'Overshoot tolerance: 0% (always round down).'}`;
+  }
+
+  // Stage 3b: FX status note
+  const foreignCurrencies = investHoldings.map(h => h.currency).filter(c => c !== FX_BASE);
+  if (foreignCurrencies.length > 0) {
+    const uniqueForeign = [...new Set(foreignCurrencies)];
+    note += `<br><br><span>// FX (Stage 3b)</span><br>`;
+    note += `Base: ${escHtml(FX_BASE)}. Foreign currencies: ${uniqueForeign.map(escHtml).join(', ')}. `;
+    note += `Allocation, targets, and sleeve totals run in ${escHtml(FX_BASE)}. `;
+    note += `Ticker Breakdown buy amounts shown in native currency (what you execute at the broker).`;
+  }
+
+  note += `<br><br><span>// NEXT STEP</span><br>See Ticker Breakdown for units and buy amounts. Frac-OFF tickers buy whole units; ▲ = rounded up.`;
+  document.getElementById('note-block').innerHTML = note;
+}
+
+// ─── PERSISTENCE ───
+const LS_KEY = 'salary2045_v3';   // bumped from v2 to avoid collision with v5 state
+
+function saveState() {
+  const holdings = [];
+  document.querySelectorAll('#holdings-body tr').forEach(tr => {
+    holdings.push({
+      ticker:       tr.querySelector('.h-ticker').value.trim().toUpperCase(),
+      sleeveKey:    tr.querySelector('.h-sleeve').value,
+      shares:       tr.querySelector('.h-shares').value,
+      price:        tr.querySelector('.h-price').value,
+      maxPct:       tr.querySelector('.h-maxpct').value,
+      fractionable: tr.querySelector('.h-frac').checked,
+      currency:     tr.querySelector('.h-currency')?.value?.trim().toUpperCase() || FX_BASE,
+    });
+  });
+  const state = {
+    sleeves:       SLEEVES.map(s => ({ key: s.key, name: s.name, color: s.color, target: s.target, isCash: s.isCash })),
+    holdings,
+    cash:          document.getElementById('cash').value,
+    existingCash:  document.getElementById('existing-cash').value,
+    feeFixed:      document.getElementById('fee-fixed').value,
+    feePct:        document.getElementById('fee-pct').value,
+    versionSelect: document.getElementById('version-select').value,
+    feeBudget:     document.getElementById('fee-budget').value,
+    overshootTol:  document.getElementById('overshoot-tol').value,
+    // Stage 3: FX state
+    fxBase:        FX_BASE,
+    fxRates:       FX_RATES,
+    fxTimestamp:   FX_TIMESTAMP,
+  };
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    if (state.sleeves && state.sleeves.length) {
+      SLEEVES = state.sleeves.map(s => ({ ...s }));
+      SLEEVES.forEach(s => {
+        const n = parseInt(s.key.replace('sl_',''));
+        if (!isNaN(n) && n > _sleeveCounter) _sleeveCounter = n;
+      });
+    }
+    if (state.cash          !== undefined) document.getElementById('cash').value           = state.cash;
+    if (state.existingCash  !== undefined) document.getElementById('existing-cash').value  = state.existingCash;
+    if (state.feeFixed      !== undefined) document.getElementById('fee-fixed').value      = state.feeFixed;
+    if (state.feePct        !== undefined) document.getElementById('fee-pct').value        = state.feePct;
+    if (state.versionSelect !== undefined) document.getElementById('version-select').value = state.versionSelect;
+    if (state.feeBudget     !== undefined) document.getElementById('fee-budget').value     = state.feeBudget;
+    if (state.overshootTol  !== undefined) document.getElementById('overshoot-tol').value  = state.overshootTol;
+    // Stage 3: restore FX state
+    if (state.fxBase)      { FX_BASE      = state.fxBase; }
+    if (state.fxRates)     { FX_RATES     = state.fxRates; }
+    if (state.fxTimestamp) { FX_TIMESTAMP = state.fxTimestamp; }
+
+    applyVersionUI();
+    updateBaseDisplay();
+    renderSleeveEditor();
+    if (state.holdings && state.holdings.length) {
+      document.getElementById('holdings-body').innerHTML = '';
+      state.holdings.forEach(h => addHoldingRow(h));
+      renderRateTable();
+      // Show cached rate timestamp if available
+      if (FX_TIMESTAMP) {
+        const statusEl = document.getElementById('fx-status');
+        if (statusEl) {
+          statusEl.style.color = 'var(--muted)';
+          statusEl.textContent = `Using cached rates from ${new Date(FX_TIMESTAMP).toLocaleString()}. Click ↻ to refresh.`;
+        }
+      }
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+function initDefaultSleeves() {
+  _sleeveCounter = 0;
+  SLEEVES = DEFAULT_SLEEVES.map(s => ({ ...s, key: genKey() }));
+}
+
+// ─── EXPORT / IMPORT ───
+function exportJSON() {
+  const holdings = [];
+  document.querySelectorAll('#holdings-body tr').forEach(tr => {
+    holdings.push({
+      ticker:       tr.querySelector('.h-ticker').value.trim().toUpperCase(),
+      sleeveKey:    tr.querySelector('.h-sleeve').value,
+      shares:       tr.querySelector('.h-shares').value,
+      price:        tr.querySelector('.h-price').value,
+      maxPct:       tr.querySelector('.h-maxpct').value,
+      fractionable: tr.querySelector('.h-frac').checked,
+      currency:     tr.querySelector('.h-currency')?.value?.trim().toUpperCase() || FX_BASE,
+    });
+  });
+  const state = {
+    exported:      new Date().toISOString().slice(0,10),
+    version:       'v6',
+    sleeves:       SLEEVES.map(s => ({ key: s.key, name: s.name, color: s.color, target: s.target, isCash: s.isCash })),
+    holdings,
+    cash:          document.getElementById('cash').value,
+    existingCash:  document.getElementById('existing-cash').value,
+    feeFixed:      document.getElementById('fee-fixed').value,
+    feePct:        document.getElementById('fee-pct').value,
+    versionSelect: document.getElementById('version-select').value,
+    feeBudget:     document.getElementById('fee-budget').value,
+    overshootTol:  document.getElementById('overshoot-tol').value,
+    // Stage 3
+    fxBase:        FX_BASE,
+    fxRates:       FX_RATES,
+    fxTimestamp:   FX_TIMESTAMP,
+  };
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `salary2045_${state.exported}.json`;
+  a.click();
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const state = JSON.parse(e.target.result);
+      if (state.sleeves && state.sleeves.length) {
+        SLEEVES = state.sleeves.map(s => ({ ...s }));
+        SLEEVES.forEach(s => { const n=parseInt(s.key.replace('sl_','')); if (!isNaN(n)&&n>_sleeveCounter) _sleeveCounter=n; });
+      }
+      if (state.cash          !== undefined) document.getElementById('cash').value           = state.cash;
+      if (state.existingCash  !== undefined) document.getElementById('existing-cash').value  = state.existingCash;
+      if (state.feeFixed      !== undefined) document.getElementById('fee-fixed').value      = state.feeFixed;
+      if (state.feePct        !== undefined) document.getElementById('fee-pct').value        = state.feePct;
+      if (state.versionSelect !== undefined) document.getElementById('version-select').value = state.versionSelect;
+      if (state.feeBudget     !== undefined) document.getElementById('fee-budget').value     = state.feeBudget;
+      if (state.overshootTol  !== undefined) document.getElementById('overshoot-tol').value  = state.overshootTol;
+      // Stage 3
+      if (state.fxBase)      { FX_BASE      = state.fxBase; }
+      if (state.fxRates)     { FX_RATES     = state.fxRates; }
+      if (state.fxTimestamp) { FX_TIMESTAMP = state.fxTimestamp; }
+
+      applyVersionUI();
+      updateBaseDisplay();
+      renderSleeveEditor();
+      if (state.holdings && state.holdings.length) {
+        document.getElementById('holdings-body').innerHTML = '';
+        state.holdings.forEach(h => addHoldingRow(h));
+      }
+      renderRateTable();
+      saveState();
+      calc();
+      document.getElementById('api-status').style.color = 'var(--green)';
+      document.getElementById('api-status').textContent = `Imported ${state.holdings?.length||0} holdings from ${state.exported||'file'} (${state.version||'unknown version'}).`;
+      if (FX_TIMESTAMP) {
+        const statusEl = document.getElementById('fx-status');
+        if (statusEl) {
+          statusEl.style.color = 'var(--muted)';
+          statusEl.textContent = `FX rates from export (${new Date(FX_TIMESTAMP).toLocaleString()}). Click ↻ to refresh.`;
+        }
+      }
+    } catch(err) {
+      document.getElementById('api-status').style.color = 'var(--red)';
+      document.getElementById('api-status').textContent = 'Import failed — invalid JSON file.';
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ─── PRICE REFRESH ───
+async function refreshPrices() {
+  const key         = document.getElementById('apikey').value.trim();
+  const providerKey = document.getElementById('provider').value;
+  const provider    = PROVIDERS[providerKey];
+  const btn         = document.getElementById('refresh-btn');
+  const status      = document.getElementById('api-status');
+
+  if (!key) {
+    status.style.color = 'var(--red)';
+    status.textContent = 'No API key — enter prices manually or paste a key.';
+    return;
+  }
+
+  const rows = document.querySelectorAll('#holdings-body tr');
+  btn.textContent = 'Fetching...';
+  btn.disabled = true;
+  let ok = 0, fail = 0;
+
+  for (const tr of rows) {
+    const ticker = tr.querySelector('.h-ticker').value.trim().toUpperCase();
+    if (!ticker) continue;
+    try {
+      const res   = await fetch(provider.url(ticker, key));
+      const data  = await res.json();
+      const price = provider.parse(data);
+      if (price) { tr.querySelector('.h-price').value = price.toFixed(2); ok++; }
+      else { fail++; }
+    } catch(e) { fail++; }
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  btn.textContent = 'Refresh Prices';
+  btn.disabled    = false;
+  status.style.color = fail ? 'var(--gold)' : 'var(--green)';
+  status.textContent = `Updated ${ok} price${ok!==1?'s':''}${fail?`, ${fail} failed`:''}.`;
+  saveState();
+  calc();
+}
+
+// ─── INIT ───
+document.getElementById('cash').addEventListener('input',          () => { saveState(); calc(); });
+document.getElementById('existing-cash').addEventListener('input', () => { saveState(); calc(); });
+
+applyVersionUI();
+
+if (!loadState()) {
+  initDefaultSleeves();
+  renderSleeveEditor();
+  updateBaseDisplay();
+  renderRateTable();
+  loadSample();
+  // Auto-fetch rates on first load (no saved state means no cached rates)
+  fetchFxRates();
+} else {
+  applyVersionUI();
+  // If no rates were in storage, auto-fetch
+  if (Object.keys(FX_RATES).length === 0) fetchFxRates();
+}
+
+</script>
+</body>
+</html>
