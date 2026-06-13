@@ -1,0 +1,3745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salary2045 — Rebalancer v6</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230a0a0f'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='20' font-family='serif' fill='%23c9a84c'>S</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --panel: #111118;
+    --border: #1e1e2e;
+    --gold: #c9a84c;
+    --gold-dim: #7a6030;
+    --green: #2ecc71;
+    --red: #e74c3c;
+    --blue: #3b82f6;
+    --purple: #a78bfa;
+    --cash: #9ca3af;
+    --text: #e8e8f0;
+    --muted: #5a5a7a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px;
+  }
+
+  header { text-align: center; margin-bottom: 32px; }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(42px, 8vw, 72px);
+    letter-spacing: 2px;
+    color: var(--gold);
+    line-height: 1;
+    font-weight: 700;
+  }
+
+  .subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 8px;
+    font-weight: 300;
+  }
+
+  .divider { width: 60px; height: 1px; background: var(--gold-dim); margin: 16px auto; }
+
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  .panel {
+    background: var(--panel);
+    border: none;
+    border-radius: 6px;
+    padding: 24px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .panel::before {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 6px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(201,168,76,0.35) 0%, rgba(167,139,250,0.15) 50%, rgba(201,168,76,0.08) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    transition: background 0.4s ease;
+  }
+  .panel:hover::before {
+    background: linear-gradient(135deg, rgba(201,168,76,0.6) 0%, rgba(167,139,250,0.3) 50%, rgba(201,168,76,0.2) 100%);
+  }
+
+  .panel-title {
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .panel-title-text { display: flex; flex-direction: column; gap: 3px; }
+  .panel-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 9px; letter-spacing: 3px;
+    color: var(--purple); text-transform: uppercase;
+  }
+  .panel-heading {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px; font-weight: 700;
+    color: var(--text); letter-spacing: 0.2px;
+    line-height: 1.1;
+  }
+  /* Inline panel-titles that are just text (sub-sections like // Live Prices) */
+  .panel-title.sub {
+    margin-top: 24px;
+    align-items: center;
+  }
+  .panel-title.sub .panel-heading { font-size: 13px; color: var(--gold-dim); font-weight: 400; font-family: 'Inter', sans-serif; letter-spacing: 2px; text-transform: uppercase; }
+
+  label {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  input[type="number"], input[type="text"] {
+    width: 100%;
+    background: #0d0d14;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--gold);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 9px 11px;
+    outline: none;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  }
+  input:focus {
+    border-color: var(--gold-dim);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
+    background: #0f0f17;
+  }
+  input[type="number"]:hover:not(:focus),
+  input[type="text"]:hover:not(:focus) { border-color: #2a2a3e; }
+  input[type="text"] { color: var(--text); }
+  input[type="checkbox"] { cursor: pointer; width: 15px; height: 15px; accent-color: var(--gold); }
+
+  .cash-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  @media (max-width: 600px) { .cash-row { grid-template-columns: 1fr; } }
+
+  button {
+    --sx: 50%; --sy: 50%; --so: 0;
+    position: relative; overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 999px;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.08s ease, box-shadow 0.18s ease;
+    border: 1px solid var(--gold-dim);
+    background: rgba(201,168,76,0.08);
+    color: var(--gold);
+    padding: 10px 20px;
+  }
+  button:hover { background: rgba(201,168,76,0.18); transform: translateY(-1px); box-shadow: 0 2px 12px rgba(201,168,76,0.15); }
+  button:active { transform: translateY(0); box-shadow: none; }
+  button:disabled { opacity: 0.55; cursor: default; transform: none; box-shadow: none; }
+  button.ghost { border-color: #3a3a55; background: transparent; color: #9090b0; }
+  button.ghost:hover { color: var(--text); border-color: var(--gold-dim); box-shadow: none; }
+  button.small { padding: 5px 14px; font-size: 9px; }
+  button.danger { border-color: rgba(231,76,60,0.4); color: var(--red); background: transparent; }
+  button.danger:hover { background: rgba(231,76,60,0.12); box-shadow: 0 2px 8px rgba(231,76,60,0.10); }
+
+  button::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle 70px at var(--sx) var(--sy),
+      rgba(255,255,255,0.13) 0%,
+      transparent 80%);
+    opacity: var(--so);
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-family: 'Inter', sans-serif; font-size: 12px; }
+  th {
+    background: #0d0d14; color: var(--muted); font-size: 9px; letter-spacing: 2px;
+    text-transform: uppercase; padding: 8px 8px; text-align: right; border-bottom: 1px solid var(--border);
+  }
+  th:first-child, th:nth-child(2) { text-align: left; }
+  td { padding: 6px 8px; text-align: right; border-bottom: 1px solid #13131a; }
+  tbody tr { transition: background 0.15s ease, transform 0.18s ease, box-shadow 0.18s ease; }
+  tbody tr:hover { background: rgba(201,168,76,0.035); transform: translateX(3px); box-shadow: inset 3px 0 0 var(--gold-dim); }
+  td:first-child, td:nth-child(2) { text-align: left; }
+  tr:last-child td { border-bottom: none; }
+  td input { font-size: 13px; padding: 6px 8px; }
+  .td-center { text-align: center !important; }
+
+  .sleeve-tag {
+    display: inline-block; font-size: 9px; letter-spacing: 1px; padding: 2px 7px;
+    border-radius: 2px; text-transform: uppercase;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .sleeve-tag:hover {
+    transform: scale(1.06);
+    box-shadow: 0 0 10px currentColor;
+  }
+
+  select {
+    background: #0d0d14; border: 1px solid var(--border); border-radius: 3px;
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px;
+    padding: 6px 8px; outline: none; cursor: pointer; width: 100%;
+  }
+  select option:disabled { color: var(--muted); }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat { background: #0d0d14; border: 1px solid var(--border); border-radius: 4px; padding: 16px; transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease; }
+  .stat:hover { transform: translateY(-5px) scale(1.02); border-color: var(--gold-dim); box-shadow: 0 12px 32px rgba(0,0,0,0.5), 0 0 20px rgba(201,168,76,0.08); }
+  .stat.highlight { border-color: var(--gold-dim); background: rgba(201,168,76,0.04); }
+  .stat.fee-stat { border-color: rgba(231,76,60,0.3); background: rgba(231,76,60,0.03); }
+  .stat-label { font-family: 'Inter', sans-serif; font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+  .stat-value { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 600; color: var(--gold); letter-spacing: -0.5px; line-height: 1; }
+  .stat-value.green { color: var(--green); }
+  .stat-value.red   { color: var(--red); }
+
+  .sleeve-bar-wrap { margin-bottom: 14px; }
+  .sleeve-bar-head { display: flex; justify-content: space-between; font-family: 'Inter', sans-serif; font-size: 11px; margin-bottom: 5px; }
+  .sleeve-bar-head .name { color: var(--text); }
+  .sleeve-bar-head .pct { color: var(--muted); }
+  .bar-track { height: 8px; background: #0d0d14; border-radius: 4px; overflow: hidden; position: relative; border: 1px solid var(--border); }
+  .bar-current { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+  .bar-target-marker { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--text); opacity: 0.6; }
+
+  /* ── Note block — simple chips with hover tooltips ── */
+  .note {
+    margin-top: 16px; padding-top: 16px;
+    border-top: 1px solid var(--border);
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .info-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 5px 12px; border-radius: 999px;
+    border: 1px solid rgba(201,168,76,0.2);
+    background: rgba(201,168,76,0.05);
+    color: var(--gold-dim); cursor: default;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    position: relative;
+  }
+  .info-chip:hover {
+    background: rgba(201,168,76,0.12);
+    border-color: var(--gold-dim);
+    color: var(--gold);
+  }
+  .info-chip.alert { border-color: rgba(231,76,60,0.3); background: rgba(231,76,60,0.05); color: var(--red); }
+  .info-chip.alert:hover { background: rgba(231,76,60,0.12); border-color: var(--red); }
+  .info-chip.ok { border-color: rgba(46,204,113,0.3); background: rgba(46,204,113,0.05); color: var(--green); }
+  .info-chip.ok:hover { background: rgba(46,204,113,0.12); border-color: var(--green); }
+  .info-chip .chip-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0;
+  }
+  .chip-tooltip {
+    display: none;
+    position: absolute; bottom: calc(100% + 8px); left: 50%;
+    transform: translateX(-50%);
+    background: #16161f; border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px 12px;
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 400;
+    color: var(--text); line-height: 1.6;
+    white-space: normal; text-align: left;
+    text-transform: none; letter-spacing: 0;
+    z-index: 200; width: 240px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    pointer-events: none;
+  }
+  .info-chip:hover .chip-tooltip { display: block; }
+  .note span { color: var(--gold-dim); }
+
+  .buy-amt   { color: var(--green); font-weight: 600; }
+  .zero-amt  { color: var(--muted); }
+  .units-amt { color: var(--blue); font-weight: 600; }
+  .up-amt    { color: var(--purple); font-weight: 600; }
+
+  .target-warn { color: var(--red); font-family: 'Inter', sans-serif; font-size: 11px; margin-top: 10px; }
+  .api-note { font-family: 'Inter', sans-serif; font-size: 9px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+  .controls-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .api-status { font-family: 'Inter', sans-serif; font-size: 10px; margin-top: 8px; min-height: 14px; }
+  .api-grid { display: grid; grid-template-columns: 160px 1fr; gap: 10px; align-items: end; }
+  @media (max-width: 600px) { .api-grid { grid-template-columns: 1fr; } }
+
+  /* Sleeve editor */
+  .sleeve-editor-row {
+    display: grid;
+    grid-template-columns: 1fr 90px 36px 36px;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  }
+  .sleeve-editor-row:hover { transform: translateY(-2px) scale(1.01); background: rgba(255,255,255,0.02); box-shadow: 0 6px 18px rgba(0,0,0,0.3); }
+  .sleeve-editor-row input[type="text"]   { font-size: 13px; padding: 6px 10px; }
+  .sleeve-editor-row input[type="number"] { font-size: 13px; padding: 6px 10px; }
+  .color-dot {
+    width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border);
+    cursor: pointer; display: inline-block; flex-shrink: 0;
+  }
+  .sleeve-cash-label {
+    font-family: 'Inter', sans-serif; font-size: 9px; color: var(--muted);
+    letter-spacing: 1px; text-transform: uppercase; padding: 4px 0;
+  }
+
+  .fee-sub-label {
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+    color: var(--text); letter-spacing: 0.2px;
+    margin: 24px 0 12px; padding-top: 18px; border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .fee-sub-label::before {
+    content: attr(data-label);
+    font-family: 'Inter', sans-serif; font-size: 9px;
+    color: var(--purple); letter-spacing: 3px; text-transform: uppercase; font-weight: 400;
+  }
+
+  /* Lift on individual form field groups */
+  .cash-row > div {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 6px; padding: 8px;
+  }
+  .cash-row > div:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  }
+
+  /* Lift on select */
+  select {
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  }
+  select:hover { border-color: #2a2a3e; transform: translateY(-1px); }
+  select:focus { border-color: var(--gold-dim); box-shadow: 0 0 0 3px rgba(201,168,76,0.12); transform: none; }
+
+  /* Lift on individual input wrappers — target label+input pairs */
+  .api-grid > div, #fee-budget-row {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 6px; padding: 4px 8px;
+  }
+  .api-grid > div:hover, #fee-budget-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+  }
+
+  /* FX rate table */
+  .fx-table { max-width: 420px; margin-top: 8px; }
+  .fx-table th { font-size: 9px; letter-spacing: 1px; }
+  .fx-table td { padding: 5px 8px; font-size: 12px; }
+  .fx-base-badge {
+    font-family: 'Inter', sans-serif; font-size: 9px; color: var(--gold-dim);
+    letter-spacing: 1px; text-transform: uppercase; margin-left: 6px;
+  }
+  .curr-input {
+    width: 130px !important; font-size: 12px !important; padding: 5px 8px !important;
+    color: var(--gold) !important;
+  }
+
+  /* ── Motion layer (visual only) ── */
+  @keyframes panelIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes valuePop { 0% { opacity: 0.35; transform: translateY(3px); } 100% { opacity: 1; transform: translateY(0); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes barFill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+  .panel { animation: panelIn 0.4s ease both; }
+  .panel:nth-of-type(1) { animation-delay: 0.02s; }
+  .panel:nth-of-type(2) { animation-delay: 0.06s; }
+  .panel:nth-of-type(3) { animation-delay: 0.10s; }
+  .panel:nth-of-type(4) { animation-delay: 0.14s; }
+  .panel:nth-of-type(5) { animation-delay: 0.18s; }
+  .panel { transition: border-color 0.25s ease; }
+  .panel { transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease; }
+  .panel:hover { border-color: #2a2a3e; transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.45), 0 0 25px rgba(201,168,76,0.04); }
+
+  /* Animate stat value whenever it re-renders (class toggled in JS) */
+  .stat-value.value-update { animation: valuePop 0.35s ease; }
+
+  /* Inline spinner for fetch buttons / statuses */
+  .spinner {
+    display: inline-block; width: 11px; height: 11px;
+    border: 2px solid rgba(201,168,76,0.25); border-top-color: var(--gold);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    vertical-align: -1px; margin-right: 6px;
+  }
+
+  /* Sleeve / plan rows ease in on render */
+  .row-enter { animation: valuePop 0.3s ease both; }
+
+  select {
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  select:hover { border-color: #2a2a3e; }
+  select:focus { border-color: var(--gold-dim); box-shadow: 0 0 0 3px rgba(201,168,76,0.12); }
+
+  /* ── Particle canvas ── */
+  header { position: relative; z-index: 1; }
+
+  /* ── Section divider with + marks ── */
+  .section-divider {
+    display: flex; align-items: center; gap: 10px;
+    margin: 8px 0 20px; opacity: 0.35;
+  }
+  .section-divider::before, .section-divider::after {
+    content: ''; flex: 1; height: 1px;
+    border-top: 1px dashed var(--gold-dim);
+  }
+  .section-divider span {
+    font-family: 'Inter', sans-serif; font-size: 10px;
+    color: var(--gold-dim); letter-spacing: 2px;
+  }
+  .section-divider span::before { content: '+ '; }
+  .section-divider span::after  { content: ' +'; }
+
+  /* ── Overshoot tolerance wrapper lift ── */
+  .tol-wrap {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 6px; padding: 8px;
+  }
+  .tol-wrap:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  }
+
+  /* ── Full-page particles ── */
+  /* ── Market Ticker Background ── */
+  #ticker-bg {
+    position: fixed; inset: 0; z-index: 0;
+    pointer-events: none; overflow: hidden;
+    opacity: 0.35;
+  }
+  .ticker-row {
+    position: absolute; white-space: nowrap;
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 11px; letter-spacing: 1px;
+    animation: tickerMove linear infinite;
+  }
+  @keyframes tickerMove {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  body.light-mode #ticker-bg { opacity: 0.3; }
+
+  /* ── Hide scrollbars globally (scroll still works) ── */
+  * { scrollbar-width: none; }
+  *::-webkit-scrollbar { display: none; }
+
+  /* ── Sleeve bar lift on hover ── */
+  .sleeve-bar-wrap {
+    cursor: default;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 6px; padding: 4px 6px;
+  }
+  .sleeve-bar-wrap:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  }
+  .sleeve-bar-wrap:hover .bar-track {
+    border-color: var(--gold-dim);
+  }
+
+  /* ── Panel headings — clean white/silver ── */
+  .panel-heading {
+    color: #e8e8f0;
+  }
+
+  /* ── Scroll reveal ── */
+  @keyframes revealUp {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .reveal {
+    opacity: 0;
+    animation: revealUp 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
+  }
+
+  /* ── Animated counter (number flip) ── */
+  @keyframes countUp {
+    from { opacity: 0.3; transform: translateY(6px) scale(0.96); }
+    to   { opacity: 1;   transform: translateY(0)   scale(1); }
+  }
+  .stat-value.counting {
+    animation: countUp 0.45s cubic-bezier(0.22,1,0.36,1);
+  }
+
+  /* ── Sticky header ── */
+  .sticky-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    padding: 8px 24px;
+    background: rgba(10,10,15,0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(201,168,76,0.12);
+    transform: translateY(-100%);
+    transition: transform 0.35s cubic-bezier(0.22,1,0.36,1);
+    pointer-events: none;
+  }
+  .sticky-bar.visible { transform: translateY(0); pointer-events: auto; }
+  .sticky-bar-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px; color: var(--gold); letter-spacing: 1px;
+  }
+  .sticky-bar-sub {
+    font-family: 'Inter', sans-serif; font-size: 10px;
+    color: var(--muted); letter-spacing: 3px; text-transform: uppercase;
+    margin-left: 14px;
+  }
+
+  /* ── Tooltips on th ── */
+  th[data-tip] { position: relative; cursor: help; }
+  th[data-tip]::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%) scale(0.9);
+    background: #1a1a28; color: var(--text);
+    font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 400;
+    letter-spacing: 0; text-transform: none;
+    white-space: nowrap; padding: 5px 9px; border-radius: 4px;
+    border: 1px solid var(--border);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 50;
+  }
+  th[data-tip]:hover::after {
+    opacity: 1; transform: translateX(-50%) scale(1);
+  }
+
+  /* ── Copy ticker ── */
+  .ticker-copy { cursor: pointer; }
+  .ticker-copy:hover { color: var(--gold); }
+  .copy-tick {
+    display: inline-block; margin-left: 4px;
+    color: var(--green); font-size: 10px;
+    opacity: 0; transform: scale(0.5);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .copy-tick.show { opacity: 1; transform: scale(1); }
+
+  /* ── Highlight row on price change ── */
+  @keyframes rowFlash { 0%{background:rgba(201,168,76,0.18);} 100%{background:transparent;} }
+  .row-flash { animation: rowFlash 0.8s ease; }
+
+  /* ── Gradient background per sleeve on row hover ── */
+  tbody tr[data-sleeve-color]:hover {
+    background: color-mix(in srgb, var(--sleeve-bg, transparent) 8%, transparent) !important;
+  }
+
+  /* ── Number ticker animation ── */
+  @keyframes numTick { from{opacity:0.4;transform:translateY(4px);} to{opacity:1;transform:translateY(0);} }
+  .num-tick { animation: numTick 0.3s ease; }
+
+  /* ── Sleeve bar pulse when far from target ── */
+  @keyframes barPulse { 0%,100%{opacity:1;} 50%{opacity:0.55;} }
+  .bar-pulse { animation: barPulse 2s ease-in-out infinite; }
+
+  /* ── Last updated timestamp ── */
+  .last-updated {
+    font-family: 'Inter', sans-serif; font-size: 10px;
+    color: var(--muted); text-align: right;
+    padding: 4px 0 0; letter-spacing: 1px;
+  }
+
+  /* ── Search bar ── */
+  .holdings-search {
+    width: 100%; background: #0d0d14;
+    border: 1px solid var(--border); border-radius: 999px;
+    color: var(--text); font-family: 'Inter', sans-serif;
+    font-size: 12px; padding: 7px 16px; outline: none;
+    margin-bottom: 12px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  .holdings-search:focus {
+    border-color: var(--gold-dim);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
+  }
+
+  /* ── Sortable column headers ── */
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: var(--gold); }
+  th.sort-asc::after  { content: ' ▲'; color: var(--gold); }
+  th.sort-desc::after { content: ' ▼'; color: var(--gold); }
+
+  /* ── Mini sparkline ── */
+  .sparkline { display: inline-block; vertical-align: middle; margin-left: 4px; }
+
+  /* ── Dark/Light mode toggle ── */
+  .mode-toggle {
+    position: fixed; top: 14px; right: 20px; z-index: 101;
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1px solid var(--gold-dim);
+    background: rgba(201,168,76,0.08);
+    color: var(--gold); font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s ease;
+  }
+  .mode-toggle:hover { background: rgba(201,168,76,0.2); transform: scale(1.1); }
+
+  /* ── Light mode — complete palette ── */
+  body.light-mode {
+    --bg: #f0ede6; --panel: #faf9f6; --border: #ccc8bc;
+    --gold: #7a5c10; --gold-dim: #9a7a30;
+    --green: #1a7a40; --red: #b83020;
+    --blue: #1a4a9a; --purple: #5a3a9a;
+    --text: #1a1814; --muted: #5a5450;
+    background-image: none;
+  }
+  
+  body.light-mode .panel { background: #faf9f6; }
+  body.light-mode .panel::before { background: linear-gradient(135deg, rgba(122,92,16,0.2) 0%, rgba(90,58,154,0.08) 50%, rgba(122,92,16,0.05) 100%); }
+  body.light-mode .panel:hover { border-color: #b8b4a8; }
+  body.light-mode input[type="number"] { background: #ede9e0; border-color: #ccc8bc; color: #7a5c10; }
+  body.light-mode input[type="text"] { background: #ede9e0; border-color: #ccc8bc; color: #1a1814; }
+  body.light-mode input:focus { box-shadow: 0 0 0 3px rgba(122,92,16,0.12); }
+  body.light-mode select { background: #ede9e0; border-color: #ccc8bc; color: #1a1814; }
+  body.light-mode .holdings-search { background: #ede9e0; border-color: #ccc8bc; color: #1a1814; }
+  body.light-mode th { background: #e8e4db; color: #5a5450; }
+  body.light-mode td { border-bottom-color: #dedad2; }
+  body.light-mode tbody tr:hover { background: rgba(122,92,16,0.05) !important; }
+  body.light-mode .sleeve-tag { filter: brightness(0.82) saturate(1.2); }
+  body.light-mode .stat { background: #ede9e0; border-color: #ccc8bc; }
+  body.light-mode .stat.highlight { background: #e8e2d4; border-color: #9a7a30; }
+  body.light-mode .stat.fee-stat { background: #f0e8e6; border-color: rgba(184,48,32,0.3); }
+  body.light-mode .stat-label { color: #5a5450; }
+  body.light-mode .stat-value { color: #7a5c10; }
+  body.light-mode .stat-value.green { color: #1a7a40; }
+  body.light-mode .stat-value.red { color: #b83020; }
+  body.light-mode .bar-track { background: #dedad2; border-color: #ccc8bc; }
+  body.light-mode .bar-target-marker { background: #5a5450; }
+  body.light-mode .sleeve-bar-head .name { color: #1a1814; }
+  body.light-mode .sleeve-bar-head .pct { color: #5a5450; }
+  body.light-mode .sleeve-bar-wrap:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+  body.light-mode button { border-color: #9a7a30; background: rgba(122,92,16,0.08); color: #7a5c10; }
+  body.light-mode button:hover { background: rgba(122,92,16,0.16); box-shadow: 0 2px 8px rgba(122,92,16,0.15); }
+  body.light-mode button.ghost { border-color: #ccc8bc; color: #5a5450; background: transparent; }
+  body.light-mode button.ghost:hover { color: #1a1814; border-color: #9a7a30; }
+  body.light-mode button.danger { border-color: rgba(184,48,32,0.4); color: #b83020; background: transparent; }
+  body.light-mode .panel-label { color: #5a3a9a; }
+  body.light-mode .panel-heading { color: #1a1814; }
+  body.light-mode .panel-title { border-bottom-color: #ccc8bc; }
+  body.light-mode .fee-sub-label { color: #1a1814; border-top-color: #ccc8bc; }
+  body.light-mode .fee-sub-label::before { color: #5a3a9a; }
+  body.light-mode label { color: #5a5450; }
+  body.light-mode .api-note { color: #7a7470; }
+  body.light-mode .buy-amt { color: #1a7a40; }
+  body.light-mode .units-amt { color: #1a4a9a; }
+  body.light-mode .up-amt { color: #5a3a9a; }
+  body.light-mode .zero-amt { color: #8a8478; }
+  body.light-mode .target-warn { color: #b83020; }
+  body.light-mode .sticky-bar { background: rgba(240,237,230,0.88); border-bottom-color: rgba(122,92,16,0.18); }
+  body.light-mode .sticky-bar-title { color: #7a5c10; }
+  body.light-mode .sticky-bar-sub { color: #5a5450; }
+  body.light-mode .section-divider { opacity: 0.45; }
+  body.light-mode .divider { background: #9a7a30; }
+  body.light-mode .fx-base-badge { color: #9a7a30; }
+  body.light-mode .curr-input { color: #7a5c10 !important; background: #ede9e0 !important; border-color: #ccc8bc !important; }
+  body.light-mode .sleeve-editor-row:hover { background: rgba(122,92,16,0.04); box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+  body.light-mode .info-chip { background: rgba(122,92,16,0.06); border-color: rgba(122,92,16,0.2); color: #7a5c10; }
+  body.light-mode .info-chip:hover { background: rgba(122,92,16,0.14); }
+  body.light-mode .info-chip.alert { background: rgba(184,48,32,0.06); border-color: rgba(184,48,32,0.25); color: #b83020; }
+  body.light-mode .info-chip.ok { background: rgba(26,122,64,0.06); border-color: rgba(26,122,64,0.25); color: #1a7a40; }
+  body.light-mode .chip-tooltip { background: #f5f2ec; border-color: #ccc8bc; color: #1a1814; }
+  body.light-mode footer { border-top-color: #ccc8bc; color: #7a7470; }
+  body.light-mode footer a { color: #9a7a30; }
+
+  /* ── Print view ── */
+  .print-btn {
+    font-family: 'Inter', sans-serif; font-size: 10px;
+    letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer; border-radius: 999px;
+    border: 1px solid var(--gold-dim);
+    background: rgba(201,168,76,0.08);
+    color: var(--gold); padding: 6px 14px;
+    transition: all 0.18s ease;
+  }
+  .print-btn:hover { background: rgba(201,168,76,0.18); }
+
+  @media print {
+    .mode-toggle, .sticky-bar,
+    .section-divider, header,
+    .panel:not(.print-panel) { display: none !important; }
+    body { background: white !important; color: black !important; padding: 8px; }
+    .print-panel { display: block !important; border: none !important; box-shadow: none !important; }
+    .print-panel::before { display: none !important; }
+    .stat-value { color: #333 !important; -webkit-text-fill-color: #333 !important; }
+    .stat { background: #f5f5f5 !important; border: 1px solid #ccc !important; }
+    .buy-amt { color: #1a7a40 !important; }
+    .zero-amt { color: #999 !important; }
+    .units-amt { color: #1a4a9a !important; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 5px 8px; font-size: 11px; color: black !important; }
+    th { background: #eee !important; }
+    .sleeve-tag { border: 1px solid #999 !important; background: transparent !important; color: #333 !important; }
+    .print-btn, .controls-row, .last-updated { display: none !important; }
+    .ticker-breakdown-section { page-break-before: always; break-before: page; margin-top: 0; }
+  }
+
+  /* ── Animated divider ── */
+  .section-divider::before, .section-divider::after {
+    background-size: 200% 1px;
+    background-image: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+    animation: dividerShimmer 3s linear infinite;
+    border-top: none; height: 1px;
+  }
+  @keyframes dividerShimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+  }
+
+  /* ── Auto-save indicator ── */
+  .autosave-dot {
+    position: fixed; bottom: 20px; right: 20px; z-index: 200;
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'Inter', sans-serif; font-size: 10px;
+    color: var(--muted); letter-spacing: 1px;
+    opacity: 0; transition: opacity 0.4s ease;
+    pointer-events: none;
+  }
+  .autosave-dot.show { opacity: 1; }
+  .autosave-dot-circle {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: dotPulse 1.2s ease-in-out infinite;
+  }
+  @keyframes dotPulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+
+  /* ── Days since rebalance ── */
+  .rebalance-counter {
+    font-family: 'Inter', sans-serif; font-size: 10px;
+    color: var(--muted); letter-spacing: 1px;
+    text-align: center; margin-bottom: 6px;
+    cursor: pointer; transition: color 0.2s;
+  }
+  .rebalance-counter:hover { color: var(--gold); }
+  .rebalance-counter strong { color: var(--gold); font-weight: 600; }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center; padding: 40px 20px;
+    font-family: 'Inter', sans-serif;
+    display: none;
+  }
+  .empty-state-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-state-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .empty-state-sub { font-size: 12px; color: var(--muted); margin-bottom: 18px; line-height: 1.6; }
+
+  /* ── Smooth ghost drag system ── */
+  .drag-ghost {
+    position: fixed; pointer-events: none; z-index: 9999;
+    opacity: 0.88; transform: scale(1.02) rotate(0.8deg);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+    border-radius: 6px; background: var(--panel);
+    border: 1px solid var(--gold-dim);
+    padding: 8px 12px; min-width: 200px;
+    font-family: 'Inter', sans-serif; font-size: 13px;
+    color: var(--text);
+  }
+  .drag-src-hidden { opacity: 0.2; pointer-events: none; }
+  .drag-insert-above { border-top: 2px solid var(--gold) !important; }
+  .drag-insert-below { border-bottom: 2px solid var(--gold) !important; }
+  .sleeve-editor-row { transition: margin 0.15s ease, opacity 0.15s ease; }
+  #holdings-body tr  { transition: opacity 0.15s ease; }
+  .h-drag-handle {
+    cursor: grab; color: var(--muted); font-size: 14px;
+    padding: 0 6px; user-select: none;
+    transition: color 0.15s;
+  }
+  .h-drag-handle:hover { color: var(--gold); }
+  .drag-handle {
+    cursor: grab; color: var(--muted); font-size: 14px;
+    padding: 0 4px; user-select: none; flex-shrink: 0;
+    transition: color 0.2s;
+  }
+  .drag-handle:hover { color: var(--gold); }
+
+  /* ── Onboarding tour ── */
+  .tour-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    pointer-events: none;
+  }
+  .tour-highlight {
+    position: fixed; z-index: 1001;
+    border: 2px solid var(--gold);
+    border-radius: 6px;
+    box-shadow: 0 0 0 4000px rgba(0,0,0,0.55), 0 0 20px rgba(201,168,76,0.4);
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.22,1,0.36,1);
+  }
+  .tour-bubble {
+    position: fixed; z-index: 1002;
+    background: #16161f; border: 1px solid var(--gold-dim);
+    border-radius: 10px; padding: 16px 20px;
+    max-width: 280px; box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+    font-family: 'Inter', sans-serif;
+    transition: all 0.4s cubic-bezier(0.22,1,0.36,1);
+  }
+  .tour-bubble-title { font-size: 13px; font-weight: 600; color: var(--gold); margin-bottom: 6px; }
+  .tour-bubble-text  { font-size: 11px; color: var(--text); line-height: 1.6; margin-bottom: 14px; }
+  .tour-bubble-nav { display: flex; justify-content: space-between; align-items: center; }
+  .tour-step-count { font-size: 10px; color: var(--muted); }
+  .tour-btn-row { display: flex; gap: 8px; }
+  .tour-btn {
+    font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 1px;
+    text-transform: uppercase; padding: 6px 14px; border-radius: 999px;
+    cursor: pointer; border: 1px solid var(--gold-dim);
+    background: rgba(201,168,76,0.1); color: var(--gold);
+    transition: background 0.18s;
+  }
+  .tour-btn:hover { background: rgba(201,168,76,0.2); }
+  .tour-btn.skip { border-color: #3a3a55; background: transparent; color: var(--muted); }
+  .tour-btn.skip:hover { color: var(--text); }
+  body.light-mode .tour-bubble { background: #f5f2ec; border-color: #9a7a30; }
+  body.light-mode .tour-highlight { box-shadow: 0 0 0 4000px rgba(0,0,0,0.4), 0 0 20px rgba(122,92,16,0.4); border-color: #7a5c10; }
+
+  /* ── Share URL toast ── */
+  .share-toast {
+    position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%) translateY(10px);
+    background: #16161f; border: 1px solid var(--gold-dim);
+    border-radius: 999px; padding: 8px 20px;
+    font-family: 'Inter', sans-serif; font-size: 11px; color: var(--gold);
+    opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none; z-index: 300; white-space: nowrap;
+  }
+  .share-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── Portfolio switch transition ── */
+  @keyframes portfolioOut {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-12px); }
+  }
+  @keyframes portfolioIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .container.portfolio-out {
+    animation: portfolioOut 0.2s ease forwards;
+    pointer-events: none;
+  }
+  .container.portfolio-in {
+    animation: portfolioIn 0.25s ease forwards;
+  }
+
+  /* Portfolio switcher */
+  .portfolio-bar {
+    display: flex; align-items: center; gap: 8px;
+    justify-content: center; flex-wrap: wrap;
+    margin: 10px 0 4px;
+  }
+  .portfolio-tab {
+    font-family: 'Inter', sans-serif; font-size: 10px;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 5px 14px; border-radius: 999px;
+    border: 1px solid #3a3a55; background: transparent;
+    color: var(--muted); cursor: pointer;
+    transition: all 0.18s ease;
+  }
+  .portfolio-tab:hover { border-color: var(--gold-dim); color: var(--text); }
+  .portfolio-tab.active { border-color: var(--gold-dim); background: rgba(201,168,76,0.12); color: var(--gold); }
+  .portfolio-tab.add-tab { border-style: dashed; }
+  .portfolio-rename { font-size: 10px; padding: 3px 8px; width: 120px; }
+  body.light-mode .portfolio-tab { border-color: #ccc8bc; color: #5a5450; }
+  body.light-mode .portfolio-tab.active { border-color: #9a7a30; background: rgba(122,92,16,0.1); color: #7a5c10; }
+
+  /* ── Mobile responsive ── */
+  @media (max-width: 768px) {
+    body { padding: 16px 10px; }
+
+    h1 { font-size: clamp(32px, 10vw, 52px); letter-spacing: 2px; }
+    .subtitle { font-size: 9px; letter-spacing: 2px; }
+
+    .container { padding: 0; width: 100%; overflow-x: hidden; }
+    .panel { margin-bottom: 12px; border-radius: 4px; }
+    body { overflow-x: hidden; }
+    h1 { font-size: clamp(28px, 8vw, 44px); letter-spacing: 1px; }
+    .subtitle { font-size: 8px; letter-spacing: 1px; }
+    .panel { padding: 16px 12px; }
+
+    /* Cash row → single column on mobile */
+    .cash-row { grid-template-columns: 1fr !important; }
+    .api-grid  { grid-template-columns: 1fr !important; }
+
+    /* Sleeve editor — compact */
+    .sleeve-editor-row {
+      grid-template-columns: 1fr 70px 28px 28px;
+      gap: 6px;
+    }
+
+    /* Holdings table → horizontal scroll on mobile (cleaner than card layout) */
+    #holdings-body tr { display: table-row; }
+    #holdings-body td { display: table-cell; padding: 6px 5px; font-size: 11px; }
+    table thead { display: table-header-group; }
+    th { font-size: 8px; padding: 6px 4px; }
+    #holdings-body input[type="text"],
+    #holdings-body input[type="number"] { font-size: 11px; }
+    #holdings-body .h-ticker   { width: 60px !important; }
+    #holdings-body .h-shares   { width: 50px !important; }
+    #holdings-body .h-price    { width: 65px !important; }
+    #holdings-body .h-currency { width: 38px !important; }
+    #holdings-body .h-maxpct   { width: 45px !important; }
+    #holdings-body select      { font-size: 11px; }
+
+    /* Ticker breakdown — compact on mobile */
+    #ticker-plan-body td, #ticker-plan-body th,
+    #plan-body td, #plan-body th { font-size: 10px; padding: 5px 4px; }
+    .sleeve-tag { font-size: 8px; padding: 2px 5px; }
+    .ticker-breakdown-section { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* Stat grid — 2 columns on mobile */
+    .stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stat-value { font-size: 20px; }
+
+    /* Controls row — wrap */
+    .controls-row { gap: 6px; }
+    .controls-row button { font-size: 9px; padding: 7px 10px; }
+
+    /* Panel title — stack on mobile */
+    .panel-title { flex-direction: column; align-items: flex-start; gap: 8px; }
+
+    /* Mode toggle — smaller on mobile */
+    .mode-toggle { width: 30px; height: 30px; font-size: 14px; top: 8px; right: 8px; }
+
+    /* Portfolio bar — scroll horizontal */
+    .portfolio-bar { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; padding-bottom: 4px; }
+
+    /* Print button — hide on mobile */
+    .print-btn { display: none; }
+
+    /* Sticky bar — smaller */
+    .sticky-bar-title { font-size: 14px; }
+    .sticky-bar-sub   { display: none; }
+  }
+
+  @media (max-width: 480px) {
+    .stat-grid { grid-template-columns: 1fr; }
+    h1 { font-size: 36px; }
+    .sleeve-editor-row { grid-template-columns: 1fr 60px 24px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="ticker-bg" aria-hidden="true"></div>
+<button class="mode-toggle" id="mode-toggle" onclick="toggleMode()" title="Toggle light/dark mode">☀</button>
+<div class="autosave-dot" id="autosave-dot">
+  <span class="autosave-dot-circle"></span>Saved
+</div>
+<div class="share-toast" id="share-toast">🔗 Link copied to clipboard!</div>
+<div class="tour-highlight" id="tour-highlight" style="display:none;"></div>
+<div class="tour-bubble"   id="tour-bubble"    style="display:none;"></div>
+<div class="sticky-bar" id="sticky-bar">
+  <span class="sticky-bar-title">Salary 2045</span>
+  <span class="sticky-bar-sub">Portfolio Rebalancer</span>
+</div>
+<header>
+  <h1>SALARY 2045</h1>
+  <div class="subtitle">Portfolio Rebalancer — Buy-Only · v6 · Multi-Currency</div>
+  <div class="divider"></div>
+  <div class="portfolio-bar" id="portfolio-bar"></div>
+  <div class="rebalance-counter" id="rebalance-counter" onclick="resetRebalanceDate()" title="Click to mark as rebalanced today"></div>
+  <div style="margin-top:8px;">
+    <button class="ghost small" onclick="startTour()" style="font-size:9px;padding:4px 12px;">? Take a Tour</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- SLEEVE MANAGER -->
+  <div class="panel">
+    <div class="panel-title">
+      <div class="panel-title-text">
+        <span class="panel-label">Allocation</span>
+        <span class="panel-heading">Target Sleeves</span>
+      </div>
+      <button class="small ghost" onclick="addSleeve()">+ Add Sleeve</button>
+    </div>
+    <div id="sleeve-editor"></div>
+    <div class="target-warn" id="target-warn"></div>
+  </div>
+
+  <!-- CASH + FEES + MODE + API -->
+  <div class="panel">
+    <div class="panel-title">
+      <div class="panel-title-text">
+        <span class="panel-label">Deployment</span>
+        <span class="panel-heading">Cash & Settings</span>
+      </div>
+    </div>
+    <div class="cash-row">
+      <div>
+        <label>Available Cash to Deploy</label>
+        <input type="number" id="cash" value="2000" min="0" step="100">
+        <div class="api-note">New money you're adding now. Always in base currency.</div>
+      </div>
+      <div>
+        <label>Existing Cash Position</label>
+        <input type="number" id="existing-cash" value="500" min="0" step="100">
+        <div class="api-note">Cash already in your account. Counts toward the Cash sleeve target. In base currency.</div>
+      </div>
+    </div>
+
+    <!-- BASE CURRENCY (Stage 3) -->
+    <div class="fee-sub-label" data-label="Settings">Base Currency</div>
+    <div class="cash-row">
+      <div>
+        <label>Base Currency</label>
+        <input type="text" id="base-currency" value="USD" maxlength="4" placeholder="USD"
+          style="width:100%;text-transform:uppercase;"
+          oninput="this.value=this.value.toUpperCase();"
+          onblur="onBaseCurrencyChange();">
+        <div class="api-note">All values display in this currency. Deposits are always in base. Per-ticker Currency field sets native denomination.</div>
+      </div>
+    </div>
+
+    <!-- FEES (Stage 1 / Req 2) -->
+    <div class="fee-sub-label" data-label="Optional">Transaction Fees</div>
+    <div class="cash-row">
+      <div>
+        <label>Fixed Fee per Trade</label>
+        <input type="number" id="fee-fixed" value="" min="0" step="0.01" placeholder="0"
+          oninput="updateVersionUI();">
+        <div class="api-note">Flat amount (base currency) charged per trade.</div>
+      </div>
+      <div>
+        <label>Percentage Fee per Trade (%)</label>
+        <input type="number" id="fee-pct" value="" min="0" step="0.001" placeholder="0"
+          oninput="updateVersionUI();">
+        <div class="api-note">% of trade size. Both filled → fee = fixed + pct × trade$.</div>
+      </div>
+    </div>
+
+    <!-- OPTIMIZATION MODE (Req 3, 10) -->
+    <div class="fee-sub-label" data-label="Strategy">Optimization Mode</div>
+    <div class="cash-row" style="align-items:start;">
+      <div>
+        <label>Trade Strategy</label>
+        <select id="version-select" onchange="updateVersionUI();">
+          <option value="A">Version A — Maximize Allocation Accuracy</option>
+          <option value="B">Version B — Honor Fee Budget</option>
+        </select>
+        <div class="api-note">Version B cuts smallest trades until Σ fees ≤ budget. Requires fees &gt; 0 — automatically falls back to A when fees are cleared.</div>
+      </div>
+      <div id="fee-budget-row" style="display:none;">
+        <label>Max Total Fee Budget</label>
+        <input type="number" id="fee-budget" value="" min="0" step="0.01" placeholder="e.g. 5.00"
+          oninput="saveState();calcDebounced();">
+        <div class="api-note">Sum of all trade fees must not exceed this. Leave empty to skip cutting.</div>
+      </div>
+    </div>
+
+    <!-- OVERSHOOT TOLERANCE (Req 14) -->
+    <div class="fee-sub-label" data-label="Rounding">Whole-Unit Tolerance</div>
+    <div style="max-width:320px;" class="tol-wrap">
+      <label>Overshoot Tolerance (%)</label>
+      <input type="number" id="overshoot-tol" value="0.5" min="0" step="0.1" placeholder="0.5"
+        oninput="saveState();calcDebounced();">
+      <div class="api-note">Max % of portfolio value a whole-unit ticker may overshoot its Phase 1 target when rounding up (only when remainder ≥ 0.5 unit). Set 0 to always round down.</div>
+    </div>
+
+    <div class="panel-title sub" style="margin-top:24px;">
+      <div class="panel-title-text">
+        <span class="panel-label">Optional</span>
+        <span class="panel-heading">Live Prices</span>
+      </div>
+    </div>
+    <div class="api-grid">
+      <div>
+        <label>Provider</label>
+        <select id="provider">
+          <option value="finnhub">Finnhub</option>
+          <option value="twelvedata">Twelve Data</option>
+          <option value="fmp">Financial Modeling Prep</option>
+          <option value="alphavantage">Alpha Vantage</option>
+          <option value="tiingo">Tiingo (may be CORS-blocked)</option>
+          <option value="polygon">Polygon (may be CORS-blocked)</option>
+        </select>
+      </div>
+      <div>
+        <label>API Key</label>
+        <input type="text" id="apikey" placeholder="Paste your key — leave empty for manual entry" value="">
+      </div>
+    </div>
+    <div class="api-note">Pick your provider, paste its key, then "Refresh Prices". The key stays in your browser.</div>
+    <div class="api-status" id="api-status"></div>
+  </div>
+
+  <!-- FX RATES (Stage 3a) -->
+  <div class="panel">
+    <div class="panel-title">
+      <div class="panel-title-text">
+        <span class="panel-label">Currency <span id="fx-base-label" style="opacity:0.7;">· base: USD</span></span>
+        <span class="panel-heading">FX Rates</span>
+      </div>
+      <button class="small ghost" onclick="fetchFxRates()">↻ Refresh Rates</button>
+    </div>
+    <div class="api-note" style="margin-bottom:8px;">
+      Rates from frankfurter.app (free, no key). Editable — override manually if offline or to fix a rate.
+      Only currencies currently in use are shown. Switching base clears rates and auto-fetches.
+    </div>
+    <div id="fx-rate-table"></div>
+    <div class="api-status" id="fx-status"></div>
+    <div class="api-status" id="fx-missing-banner"></div>
+  </div>
+
+  <!-- HOLDINGS -->
+  <div class="section-divider"><span>Holdings</span></div>
+  <div class="panel">
+    <div class="panel-title">
+      <div class="panel-title-text">
+        <span class="panel-label">Portfolio</span>
+        <span class="panel-heading">Holdings</span>
+      </div>
+      <button class="small ghost" id="refresh-btn" onclick="refreshPrices()">Refresh Prices</button>
+    </div>
+    <input type="text" class="holdings-search" id="holdings-search" placeholder="🔍  Search tickers..." oninput="filterHoldings(this.value)">
+    <div id="holdings-empty" class="empty-state">
+      <div class="empty-state-icon">📊</div>
+      <div class="empty-state-title">No holdings yet</div>
+      <div class="empty-state-sub">Add your first holding to get started,<br>or load the sample portfolio to explore.</div>
+      <button onclick="addHoldingRow()">+ Add First Holding</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Ticker</th>
+            <th>Sleeve</th>
+            <th>Shares</th>
+            <th>Price (native)</th>
+            <th>Curr</th>
+            <th id="th-value-base">Value (USD)</th>
+            <th>Max %</th>
+            <th style="text-align:center;" title="Allow fractional share buys">Frac</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="holdings-body"></tbody>
+      </table>
+    </div>
+    <div class="api-note" style="margin-top:8px;">
+      Curr = native currency of the ticker (e.g. GBP for London-listed stocks). Price is always in native currency.
+      Value column converts to base using FX rates above. Frac = allow fractional new buys.
+    </div>
+    <div class="controls-row">
+      <button class="ghost" onclick="addHoldingRow()">+ Add Holding</button>
+      <button class="ghost" onclick="loadSample()">Load Sample Portfolio</button>
+      <button class="ghost" onclick="exportJSON()">↓ Export JSON</button>
+      <button class="ghost" onclick="exportCSV()">↓ Export CSV</button>
+      <label style="display:inline-flex;align-items:center;margin:0;">
+        <button class="ghost" onclick="document.getElementById('import-file').click()">↑ Import JSON</button>
+        <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
+      </label>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="section-divider"><span>Rebalance Plan</span></div>
+  <div class="panel print-panel">
+    <div class="panel-title">
+      <div class="panel-title-text">
+        <span class="panel-label">Output</span>
+        <span class="panel-heading">Rebalance Plan</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="last-updated" id="last-updated"></span>
+        <button class="print-btn" onclick="shareURL()">🔗 Share</button>
+        <button class="print-btn" onclick="window.print()">⎙ Print Plan</button>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat highlight">
+        <div class="stat-label">Portfolio Value</div>
+        <div class="stat-value" id="out-current">—</div>
+      </div>
+      <div class="stat highlight">
+        <div class="stat-label">After Deploy</div>
+        <div class="stat-value" id="out-after">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Cash Allocated</div>
+        <div class="stat-value green" id="out-allocated">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Cash Left</div>
+        <div class="stat-value" id="out-leftover">—</div>
+      </div>
+      <div class="stat fee-stat" id="fee-stat-box" style="display:none;">
+        <div class="stat-label">Total Fees</div>
+        <div class="stat-value red" id="out-fees">—</div>
+      </div>
+    </div>
+
+    <div id="sleeve-bars"></div>
+
+    <div style="overflow-x:auto; margin-top:20px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Sleeve</th><th>Current %</th><th data-tip="Projected % after deploying cash">After %</th><th>Target %</th><th data-tip="Distance from target (positive = underweight)">Gap</th><th data-tip="Amount to buy in base currency">$ To Buy</th>
+          </tr>
+        </thead>
+        <tbody id="plan-body"></tbody>
+      </table>
+    </div>
+
+    <div class="ticker-breakdown-section" style="margin-top:16px; overflow-x:auto;">
+      <div class="panel-title" style="margin-bottom:12px; margin-top:8px; border-top:1px solid var(--border); padding-top:16px;">
+        <div class="panel-title-text">
+          <span class="panel-label">Per Position</span>
+          <span class="panel-heading">Ticker Breakdown</span>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Ticker</th><th>Sleeve</th><th data-tip="Native currency of this ticker">Curr</th><th class="sortable" data-col="pct">Current %</th><th data-tip="Max % of portfolio this position may reach">Max %</th><th class="sortable" data-col="units" data-tip="Whole units to buy (▲ = rounded up)">Units</th><th class="sortable" data-col="buy" data-tip="Buy amount in native currency — execute at broker">$ To Buy</th>
+          </tr>
+        </thead>
+        <tbody id="ticker-plan-body"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<footer style="text-align:center; padding: 32px 20px 24px; font-family:'Inter',sans-serif; font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; border-top: 1px solid var(--border); margin-top: 8px;">
+  © 2045 Salary2045 · <a href="https://github.com/GavrielP1/Salary2045-Rebalancer" target="_blank" style="color:var(--gold-dim); text-decoration:none; transition: color 0.2s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--gold-dim)'">GavrielP1 on GitHub</a> · MIT License
+</footer>
+
+<script>
+// ─── SMOOTH DRAG UTILITY ───
+// Handles mouse-based drag with floating ghost element and live slot preview.
+// Works for both div rows (sleeves) and tr rows (holdings).
+function smoothDrag(handle, item, onDrop) {
+  handle.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+
+    const parent   = item.parentElement;
+    const itemRect = item.getBoundingClientRect();
+
+    // Create ghost
+    const ghost = document.createElement('div');
+    ghost.className = 'drag-ghost';
+    ghost.textContent = item.querySelector('input[type="text"], .h-ticker')?.value || '⠿';
+    ghost.style.width  = itemRect.width + 'px';
+    ghost.style.height = itemRect.height + 'px';
+    ghost.style.left   = itemRect.left + 'px';
+    ghost.style.top    = itemRect.top  + 'px';
+    document.body.appendChild(ghost);
+
+    // Hide source
+    item.classList.add('drag-src-hidden');
+
+    const offsetX = e.clientX - itemRect.left;
+    const offsetY = e.clientY - itemRect.top;
+    let   overEl  = null;
+
+    function onMove(ev) {
+      ghost.style.left = (ev.clientX - offsetX) + 'px';
+      ghost.style.top  = (ev.clientY - offsetY) + 'px';
+
+      // Find sibling under cursor
+      ghost.style.display = 'none';
+      const el = document.elementFromPoint(ev.clientX, ev.clientY);
+      ghost.style.display = '';
+
+      const sibling = el?.closest
+        ? (el.closest('.sleeve-editor-row') || el.closest('#holdings-body tr'))
+        : null;
+
+      // Clear previous indicator
+      if (overEl && overEl !== sibling) {
+        overEl.classList.remove('drag-insert-above', 'drag-insert-below');
+      }
+
+      if (sibling && sibling !== item && sibling.parentElement === parent) {
+        overEl = sibling;
+        const r   = sibling.getBoundingClientRect();
+        const mid = r.top + r.height / 2;
+        sibling.classList.remove('drag-insert-above','drag-insert-below');
+        sibling.classList.add(ev.clientY < mid ? 'drag-insert-above' : 'drag-insert-below');
+      } else {
+        overEl = null;
+      }
+    }
+
+    function onUp(ev) {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup',   onUp);
+      ghost.remove();
+      item.classList.remove('drag-src-hidden');
+
+      if (overEl && overEl !== item) {
+        const r   = overEl.getBoundingClientRect();
+        const mid = r.top + r.height / 2;
+        overEl.classList.remove('drag-insert-above','drag-insert-below');
+        if (ev.clientY < mid) parent.insertBefore(item, overEl);
+        else parent.insertBefore(item, overEl.nextSibling);
+        onDrop();
+      } else if (overEl) {
+        overEl.classList.remove('drag-insert-above','drag-insert-below');
+      }
+    }
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup',   onUp);
+  });
+}
+
+// ─── PALETTE ───
+const PALETTE = [
+  '#3b82f6','#c9a84c','#a78bfa','#2ecc71','#9ca3af',
+  '#f97316','#ec4899','#06b6d4','#84cc16','#ef4444'
+];
+
+// ─── SLEEVES ───
+let SLEEVES = [];
+let _sleeveCounter = 0;
+
+function genKey() { return 'sl_' + (++_sleeveCounter); }
+
+const DEFAULT_SLEEVES = [
+  { name: 'Core',            color: '#3b82f6', target: 40, isCash: false },
+  { name: 'Satellite',       color: '#c9a84c', target: 38, isCash: false },
+  { name: 'High Conviction', color: '#a78bfa', target: 10, isCash: false },
+  { name: 'Hedge',           color: '#2ecc71', target:  7, isCash: false },
+  { name: 'Cash',            color: '#9ca3af', target:  5, isCash: true  },
+];
+
+const SAMPLE_HOLDINGS = [
+  { ticker: 'SCHD', sleeveIdx: 0, shares: 52, price: 27.70,  fractionable: false },
+  { ticker: 'DGRW', sleeveIdx: 0, shares:  5, price: 90.39,  fractionable: false },
+  { ticker: 'CNI',  sleeveIdx: 1, shares:  3, price: 100,    fractionable: false },
+  { ticker: 'PLD',  sleeveIdx: 1, shares:  2, price: 110,    fractionable: false },
+  { ticker: 'NEE',  sleeveIdx: 1, shares:  2, price:  70,    fractionable: false },
+  { ticker: 'LOW',  sleeveIdx: 1, shares:  2, price: 230,    fractionable: false },
+  { ticker: 'SHW',  sleeveIdx: 1, shares:  1, price: 340,    fractionable: false },
+  { ticker: 'PH',   sleeveIdx: 1, shares:  1, price: 650,    fractionable: false },
+  { ticker: 'LIN',  sleeveIdx: 1, shares:  1, price: 450,    fractionable: false },
+  { ticker: 'MA',   sleeveIdx: 1, shares:  1, price: 480,    fractionable: false },
+  { ticker: 'ABT',  sleeveIdx: 1, shares:  2, price: 120,    fractionable: false },
+  { ticker: 'AVGO', sleeveIdx: 2, shares:  2, price: 230,    fractionable: false },
+  { ticker: 'MSCI', sleeveIdx: 2, shares:  1, price: 560,    fractionable: false },
+  { ticker: 'IAU',  sleeveIdx: 3, shares:  7, price:  55,    fractionable: false },
+];
+
+// ─── PROVIDERS ───
+const PROVIDERS = {
+  finnhub:      { url: (t,k) => `https://finnhub.io/api/v1/quote?symbol=${t}&token=${k}`, parse: d => (d&&typeof d.c==='number'&&d.c>0)?d.c:null },
+  twelvedata:   { url: (t,k) => `https://api.twelvedata.com/price?symbol=${t}&apikey=${k}`, parse: d => (d&&d.price)?parseFloat(d.price):null },
+  alphavantage: { url: (t,k) => `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${t}&apikey=${k}`, parse: d => { const q=d&&d['Global Quote']; const p=q&&q['05. price']; return p?parseFloat(p):null; } },
+  fmp:          { url: (t,k) => `https://financialmodelingprep.com/api/v3/quote-short/${t}?apikey=${k}`, parse: d => (Array.isArray(d)&&d[0]&&d[0].price)?parseFloat(d[0].price):null },
+  tiingo:       { url: (t,k) => `https://api.tiingo.com/iex/${t}?token=${k}`, parse: d => { const r=Array.isArray(d)?d[0]:d; const p=r&&(r.last??r.tngoLast??r.prevClose); return p?parseFloat(p):null; } },
+  polygon:      { url: (t,k) => `https://api.polygon.io/v2/aggs/ticker/${t}/prev?adjusted=true&apiKey=${k}`, parse: d => { const r=d&&d.results&&d.results[0]; return (r&&r.c)?parseFloat(r.c):null; } },
+};
+
+// ─── CURRENCY SYMBOLS ───
+const CURRENCY_SYMBOLS = {
+  USD:'$', EUR:'€', GBP:'£', ILS:'₪', JPY:'¥', CHF:'Fr\u00a0',
+  CAD:'C$', AUD:'A$', HKD:'HK$', SGD:'S$', NZD:'NZ$',
+  SEK:'kr\u00a0', NOK:'kr\u00a0', DKK:'kr\u00a0', CNY:'¥', INR:'₹'
+};
+
+// ─── FX MODULE (Stage 3a) ───
+// FX_RATES stores rates as returned by frankfurter.app with FX_BASE as base:
+//   FX_RATES['EUR'] = 0.93  means  1 USD = 0.93 EUR  (when base = USD)
+// toBase(amount, 'EUR')  → amount / 0.93  (convert EUR → USD)
+// fromBase(amount, 'EUR') → amount * 0.93  (convert USD → EUR)
+
+let FX_BASE      = 'USD';
+let FX_RATES     = {};       // { 'EUR': 0.93, 'GBP': 0.79, ... }
+let FX_TIMESTAMP = null;
+
+function toBase(amount, currency) {
+  const c = (currency || FX_BASE).toUpperCase();
+  if (c === FX_BASE) return amount;
+  const rate = FX_RATES[c];
+  if (!rate || rate <= 0) return null;   // missing rate → unconvertible, never passthrough
+  return amount / rate;
+}
+
+function fromBase(amount, currency) {
+  const c = (currency || FX_BASE).toUpperCase();
+  if (c === FX_BASE) return amount;
+  const rate = FX_RATES[c];
+  if (!rate || rate <= 0) return null;   // missing rate → unconvertible
+  return amount * rate;
+}
+
+// ─── Rate-availability helpers (Stage 3a patch) ───
+// Returns true if a valid rate exists for currency. Base is always valid (rate = 1).
+function hasRate(currency) {
+  const c = (currency || FX_BASE).toUpperCase();
+  if (c === FX_BASE) return true;
+  return typeof FX_RATES[c] === 'number' && isFinite(FX_RATES[c]) && FX_RATES[c] > 0;
+}
+
+// Returns the subset of active currencies for which hasRate() is false.
+// Empty array = all rates present; a single-currency portfolio always returns [].
+function getMissingCurrencies() {
+  return getActiveCurrencies().filter(c => !hasRate(c));
+}
+
+// Drives the missing-rate banner adjacent to the FX rate table.
+// Called from calc() and directly after fetch failure.
+function updateFxBanner() {
+  const bannerEl = document.getElementById('fx-missing-banner');
+  if (!bannerEl) return;
+  const missing = getMissingCurrencies();
+  if (missing.length === 0) {
+    bannerEl.textContent = '';
+    bannerEl.style.color = '';
+  } else {
+    bannerEl.style.color = 'var(--gold)';
+    bannerEl.textContent = `Missing rates for: ${missing.join(', ')}. Enter manually in the table above or refresh.`;
+  }
+}
+
+// Returns all distinct currency codes currently in holdings + the base currency
+function getActiveCurrencies() {
+  const set = new Set([FX_BASE]);
+  document.querySelectorAll('#holdings-body .h-currency').forEach(el => {
+    const v = el.value.trim().toUpperCase();
+    if (v && v.length >= 2) set.add(v);
+  });
+  return [...set].sort((a, b) => a === FX_BASE ? -1 : b === FX_BASE ? 1 : a.localeCompare(b));
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderRateTable() {
+  const el = document.getElementById('fx-rate-table');
+  if (!el) return;
+  const currencies = getActiveCurrencies();
+
+  let html = `<table class="fx-table">
+    <thead>
+      <tr>
+        <th style="text-align:left;">Currency</th>
+        <th style="text-align:right;">1 ${escHtml(FX_BASE)} =</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  currencies.forEach(curr => {
+    if (curr === FX_BASE) {
+      html += `<tr>
+        <td style="text-align:left;"><strong>${escHtml(curr)}</strong>
+          <span class="fx-base-badge">base</span></td>
+        <td style="text-align:right;color:var(--muted);">1.000000</td>
+        <td></td>
+      </tr>`;
+    } else {
+      const rate = (FX_RATES[curr] !== undefined) ? FX_RATES[curr] : 1;
+      html += `<tr>
+        <td style="text-align:left;"><strong>${escHtml(curr)}</strong></td>
+        <td style="text-align:right;">
+          <input type="number" class="curr-input fx-rate-input"
+            data-currency="${escHtml(curr)}"
+            value="${rate.toFixed(6)}"
+            min="0.000001" step="0.000001"
+            oninput="onFxRateEdit(this);">
+        </td>
+        <td style="text-align:left;color:var(--muted);font-size:9px;padding-left:4px;">${escHtml(curr)}</td>
+      </tr>`;
+    }
+  });
+
+  html += '</tbody></table>';
+  if (currencies.length <= 1) {
+    html += `<div class="api-note" style="margin-top:6px;">Add holdings with non-base currencies to see conversion rows.</div>`;
+  }
+  el.innerHTML = html;
+}
+
+function onFxRateEdit(input) {
+  const currency = input.dataset.currency;
+  const val = parseFloat(input.value);
+  if (currency && val > 0) {
+    FX_RATES[currency] = val;
+    saveState();
+    calc();
+  }
+}
+
+async function fetchFxRates() {
+  const statusEl = document.getElementById('fx-status');
+  if (!statusEl) return;
+  statusEl.style.color = 'var(--gold)';
+  statusEl.innerHTML = '<span class="spinner"></span>Fetching rates from frankfurter.app…';
+
+  // Request only currencies that are actually in use (avoids over-fetching)
+  const foreign = getActiveCurrencies().filter(c => c !== FX_BASE);
+  const symbolsParam = foreign.length ? '&symbols=' + foreign.join(',') : '';
+  const url = `https://api.frankfurter.app/latest?base=${encodeURIComponent(FX_BASE)}${symbolsParam}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data.rates) throw new Error('No rates in response');
+
+    // Merge into FX_RATES (keeps any manual overrides for currencies not returned)
+    Object.assign(FX_RATES, data.rates);
+    FX_TIMESTAMP = new Date().toISOString();
+
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = `Rates updated ${new Date(FX_TIMESTAMP).toLocaleString()}.`;
+
+    renderRateTable();
+    saveState();
+    calc();
+  } catch (e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = `Fetch failed: ${e.message}. Manual rates active.`;
+    calc();  // refresh display with missing-rate guards after failed fetch
+  }
+}
+
+function onBaseCurrencyChange() {
+  const newBase = document.getElementById('base-currency').value.trim().toUpperCase();
+  if (!newBase || newBase === FX_BASE) return;
+  FX_BASE = newBase;
+  FX_RATES = {};   // rates are base-relative; old rates are invalid after base switch
+  updateBaseDisplay();
+  renderRateTable();
+  fetchFxRates();  // auto-fetch with new base (also calls saveState + calc on completion)
+}
+
+// Sync all DOM elements that display the base currency name
+function updateBaseDisplay() {
+  const baseLabelEl = document.getElementById('fx-base-label');
+  if (baseLabelEl) baseLabelEl.textContent = `(base: ${FX_BASE})`;
+
+  const thEl = document.getElementById('th-value-base');
+  if (thEl) thEl.textContent = `Value (${FX_BASE})`;
+
+  const baseInput = document.getElementById('base-currency');
+  if (baseInput && baseInput.value.toUpperCase() !== FX_BASE) baseInput.value = FX_BASE;
+}
+
+// ─── fmt ─── (uses base currency symbol; signature unchanged for backwards compatibility)
+function fmt(n, dec=0) {
+  const sym = CURRENCY_SYMBOLS[FX_BASE] || (FX_BASE + '\u00a0');
+  if (n >= 1e6) return sym + (n/1e6).toFixed(2) + 'M';
+  return sym + n.toLocaleString('en-US', {maximumFractionDigits: dec, minimumFractionDigits: dec > 0 ? dec : 0});
+}
+
+// ─── fmtNative ─── Format a native-currency amount (Ticker Breakdown $ To Buy column).
+// For base-currency tickers, delegates to fmt() — result is identical.
+function fmtNative(n, currency, dec=2) {
+  const c = (currency || FX_BASE).toUpperCase();
+  if (c === FX_BASE) return fmt(n, dec);
+  const sym = CURRENCY_SYMBOLS[c] || (c + '\u00a0');
+  if (n >= 1e6) return sym + (n/1e6).toFixed(2) + 'M';
+  return sym + n.toLocaleString('en-US', {maximumFractionDigits: dec, minimumFractionDigits: dec > 0 ? dec : 0});
+}
+
+function fmtUnits(n, fractionable, roundedUp) {
+  if (n <= 0) return '<span class="zero-amt">—</span>';
+  const display = fractionable ? n.toFixed(4).replace(/\.?0+$/, '') : String(Math.floor(n));
+  const cls     = roundedUp ? 'up-amt' : 'units-amt';
+  const suffix  = roundedUp ? ' ▲' : '';
+  return `<span class="${cls}">${display}${suffix}</span>`;
+}
+
+// ─── SLEEVE RENDERING ───
+function renderSleeveEditor() {
+  const el = document.getElementById('sleeve-editor');
+  el.innerHTML = '';
+  SLEEVES.forEach((s, i) => {
+    const row = document.createElement('div');
+    row.className = 'sleeve-editor-row';
+    row.dataset.idx = i;
+    if (s.isCash) {
+      row.innerHTML = `
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="color:var(--muted);font-size:12px;cursor:default;">⠿</span>
+          <span class="sleeve-tag" style="background:${hexToRgba(s.color,0.12)};color:${s.color};border:1px solid ${hexToRgba(s.color,0.3)};">${s.name}</span>
+          <span class="sleeve-cash-label">cash sleeve — always last</span>
+        </div>
+        <input type="number" value="${s.target}" min="0" max="100" step="0.5"
+          style="width:80px;" oninput="SLEEVES[${i}].target=parseFloat(this.value)||0;saveState();calcDebounced();">
+        <div></div><div></div>`;
+    } else {
+      row.draggable = true;
+      row.innerHTML = `
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="drag-handle" title="Drag to reorder">⠿</span>
+          <input type="text" value="${s.name}" placeholder="Sleeve name" style="flex:1;"
+            oninput="SLEEVES[${i}].name=this.value;updateHoldingSelects();saveState();calcDebounced();">
+        </div>
+        <input type="number" value="${s.target}" min="0" max="100" step="0.5"
+          oninput="SLEEVES[${i}].target=parseFloat(this.value)||0;saveState();calcDebounced();">
+        <input type="color" value="${s.color}" title="Color"
+          style="width:32px;height:32px;padding:2px;background:#0d0d14;border:1px solid var(--border);border-radius:3px;cursor:pointer;"
+          oninput="SLEEVES[${i}].color=this.value;saveState();calcDebounced();">
+        <button class="small danger" title="Delete sleeve" onclick="deleteSleeve(${i})">✕</button>`;
+
+      // Smooth drag via shared utility
+      const handle = row.querySelector('.drag-handle');
+      if (handle) {
+        smoothDrag(handle, row, () => {
+          // On drop: read new order from DOM and sync to SLEEVES
+          const newOrder = [];
+          document.querySelectorAll('#sleeve-editor .sleeve-editor-row').forEach(r => {
+            const idx = parseInt(r.dataset.idx);
+            if (!isNaN(idx)) newOrder.push(SLEEVES[idx]);
+          });
+          const cash = SLEEVES.find(s2 => s2.isCash);
+          SLEEVES = newOrder.filter(s2 => !s2.isCash);
+          if (cash) SLEEVES.push(cash);
+          renderSleeveEditor(); updateHoldingSelects(); saveState(); calcDebounced();
+        });
+      }
+    }
+    el.appendChild(row);
+  });
+}
+
+function addSleeve() {
+  const usedColors = SLEEVES.map(s => s.color);
+  const color = PALETTE.find(c => !usedColors.includes(c)) || PALETTE[SLEEVES.length % PALETTE.length];
+  const cashIdx = SLEEVES.findIndex(s => s.isCash);
+  const newSleeve = { key: genKey(), name: 'New Sleeve', color, target: 0, isCash: false };
+  if (cashIdx >= 0) SLEEVES.splice(cashIdx, 0, newSleeve);
+  else SLEEVES.push(newSleeve);
+  renderSleeveEditor(); updateHoldingSelects(); saveState(); calcDebounced();
+}
+
+function deleteSleeve(i) {
+  if (SLEEVES[i].isCash) return;
+  const key = SLEEVES[i].key;
+  SLEEVES.splice(i, 1);
+  const fallback = SLEEVES.find(s => !s.isCash);
+  document.querySelectorAll('#holdings-body tr').forEach(tr => {
+    const sel = tr.querySelector('.h-sleeve');
+    if (sel && sel.value === key) sel.value = fallback ? fallback.key : '';
+  });
+  renderSleeveEditor(); updateHoldingSelects(); saveState(); calcDebounced();
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function sleeveTag(s) {
+  return `<span class="sleeve-tag" style="background:${hexToRgba(s.color,0.12)};color:${s.color};border:1px solid ${hexToRgba(s.color,0.3)};">${s.name}</span>`;
+}
+
+function sleeveOptions(selectedKey) {
+  return SLEEVES.filter(s => !s.isCash)
+    .map(s => `<option value="${s.key}" ${s.key===selectedKey?'selected':''}>${s.name}</option>`).join('');
+}
+
+function updateHoldingSelects() {
+  document.querySelectorAll('#holdings-body tr').forEach(tr => {
+    const sel = tr.querySelector('.h-sleeve');
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = sleeveOptions(cur);
+    if (!SLEEVES.find(s => s.key === sel.value)) {
+      const first = SLEEVES.find(s => !s.isCash);
+      if (first) sel.value = first.key;
+    }
+  });
+}
+
+// ─── VERSION UI (Req 3, 10) ───
+function applyVersionUI() {
+  const fixedFee = parseFloat(document.getElementById('fee-fixed').value) || 0;
+  const pctFee   = parseFloat(document.getElementById('fee-pct').value)   || 0;
+  const hasFees  = fixedFee > 0 || pctFee > 0;
+  const selEl    = document.getElementById('version-select');
+  const optB     = selEl.querySelector('option[value="B"]');
+
+  if (!hasFees) {
+    optB.disabled = true;
+    if (selEl.value === 'B') selEl.value = 'A';
+  } else {
+    optB.disabled = false;
+  }
+  document.getElementById('fee-budget-row').style.display = selEl.value === 'B' ? '' : 'none';
+}
+
+function updateVersionUI() {
+  applyVersionUI();
+  saveState();
+  calc();
+}
+
+// ─── HOLDINGS ───
+function addHoldingRow(data) {
+  const firstNonCash = SLEEVES.find(s => !s.isCash);
+  const d = data || {};
+  const ticker       = d.ticker       !== undefined ? d.ticker       : '';
+  const sleeveKey    = d.sleeveKey    !== undefined ? d.sleeveKey    : (firstNonCash ? firstNonCash.key : '');
+  const shares       = d.shares       !== undefined ? d.shares       : 0;
+  const price        = d.price        !== undefined ? d.price        : 0;
+  const maxPct       = d.maxPct       !== undefined ? d.maxPct       : '';
+  const fractionable = d.fractionable !== undefined ? !!d.fractionable : false;
+  // Stage 3: currency field — defaults to current base currency
+  const currency     = d.currency     !== undefined ? d.currency     : FX_BASE;
+
+  const tbody = document.getElementById('holdings-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="padding-right:4px;" class="h-drag-handle" title="Drag to reorder">⠿</td>
+    <td><input type="text"   class="h-ticker"   value="${ticker}"   placeholder="TICKER" style="width:90px;text-transform:uppercase;"></td>
+    <td><select class="h-sleeve">${sleeveOptions(sleeveKey)}</select></td>
+    <td><input type="number" class="h-shares"   value="${shares}"   min="0" step="1"    style="width:80px;"></td>
+    <td><input type="number" class="h-price"    value="${price}"    min="0" step="0.01" style="width:90px;"></td>
+    <td><input type="text"   class="h-currency" value="${currency}" placeholder="${FX_BASE}" maxlength="4"
+          style="width:55px;text-transform:uppercase;" title="Native currency of this ticker"></td>
+    <td class="h-value">—</td>
+    <td><input type="number" class="h-maxpct"   value="${maxPct}"  min="0" max="100" step="0.5" placeholder="—" style="width:65px;color:var(--purple);"></td>
+    <td class="td-center"><input type="checkbox" class="h-frac" ${fractionable ? 'checked' : ''} title="Allow fractional buys for this ticker"></td>
+    <td><button class="small danger" onclick="this.closest('tr').remove();renderRateTable();saveState();calcDebounced();">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+
+  // Smooth drag on handle cell
+  const handle = tr.querySelector('.h-drag-handle');
+  if (handle) {
+    smoothDrag(handle, tr, () => { saveState(); calcDebounced(); });
+  }
+
+  // Generic change handler (save + recalc)
+  tr.querySelectorAll('input,select').forEach(el => el.addEventListener('input',  () => { saveState(); calcDebounced(); }));
+  tr.querySelectorAll('input[type="checkbox"]').forEach(el => el.addEventListener('change', () => { saveState(); calcDebounced(); }));
+
+  // Currency-specific: uppercase + refresh rate table when currency changes
+  const currEl = tr.querySelector('.h-currency');
+  currEl.addEventListener('input', () => {
+    currEl.value = currEl.value.toUpperCase();
+    renderRateTable();
+  });
+
+  // Render rate table now in case a new currency was introduced
+  renderRateTable();
+  calc();
+}
+
+function loadSample() {
+  initDefaultSleeves();
+  renderSleeveEditor();
+  document.getElementById('holdings-body').innerHTML = '';
+  SAMPLE_HOLDINGS.forEach(h => {
+    const s = SLEEVES[h.sleeveIdx] || SLEEVES[0];
+    addHoldingRow({ ticker: h.ticker, sleeveKey: s.key, shares: h.shares, price: h.price, fractionable: h.fractionable });
+    // currency defaults to FX_BASE for all sample holdings
+  });
+  saveState();
+}
+
+function readHoldings() {
+  const rows = [];
+  document.querySelectorAll('#holdings-body tr').forEach(tr => {
+    const ticker       = tr.querySelector('.h-ticker').value.trim().toUpperCase();
+    const sleeveKey    = tr.querySelector('.h-sleeve').value;
+    const shares       = parseFloat(tr.querySelector('.h-shares').value) || 0;
+    const price        = parseFloat(tr.querySelector('.h-price').value)  || 0;
+    // Stage 3: read currency, compute base-converted value for display
+    const currencyRaw  = tr.querySelector('.h-currency')?.value?.trim().toUpperCase() || FX_BASE;
+    const currency     = currencyRaw || FX_BASE;
+    const value        = shares * price;                  // native currency value
+    const valueBase    = toBase(value, currency);         // base-currency value (display); null if rate missing
+    const maxPctRaw    = tr.querySelector('.h-maxpct').value;
+    const maxPct       = maxPctRaw !== '' ? parseFloat(maxPctRaw) : null;
+    const fractionable = tr.querySelector('.h-frac').checked;
+
+    // Display value in base currency in the Value column; ↻ pending if rate is absent
+    if (valueBase === null) {
+      tr.querySelector('.h-value').innerHTML = '<span style="color:var(--muted);font-family:Inter,sans-serif;font-size:11px;">↻ pending</span>';
+    } else {
+      tr.querySelector('.h-value').textContent = fmt(valueBase, 2);
+    }
+
+    rows.push({ ticker, sleeveKey, shares, price, value, valueBase, currency, maxPct, fractionable });
+  });
+  return rows;
+}
+
+// ─── SHARED HELPER: Req 14 whole-unit round-up gate (Stage 3b) ───
+// amounts[ticker] and recyclePool are in BASE. totalAfter is in BASE.
+// h.valueBase is the current holding value in BASE.
+// Unit counting is done in NATIVE (convert BASE→native, divide by native price, floor),
+// then convert back to BASE. Guard comparisons (overshoot, capRoom, recyclePool) stay in BASE.
+// For a single-currency (all-base) portfolio: fromBase/toBase are identity → byte-for-byte v5.
+function applyWholeUnitRoundingGate(holdings, amounts, recyclePool, totalAfter, overshootTol, tickerRoundedUp, EPSILON) {
+  holdings.forEach(h => {
+    if (!h.fractionable && h.price > 0 && amounts[h.ticker] > 0) {
+      // Convert BASE allocation to native for share counting
+      const allocNative       = fromBase(amounts[h.ticker], h.currency);
+      const wholeUnits        = Math.floor(allocNative / h.price);
+      const roundedDownNative = wholeUnits * h.price;
+      const fracNative        = allocNative - roundedDownNative;
+      const remainder         = fracNative / h.price;  // fraction of one share
+
+      let didRoundUp = false;
+      if (remainder >= 0.5 && overshootTol > 0) {
+        const roundUpNative = (wholeUnits + 1) * h.price;
+        const extraNative   = roundUpNative - allocNative;
+        const extraBase     = toBase(extraNative, h.currency);  // guard in BASE
+        const overshootPct  = (extraBase / totalAfter) * 100;
+        const capRoom       = h.maxPct !== null
+          ? Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase - amounts[h.ticker])
+          : Infinity;
+
+        if (overshootPct <= overshootTol + 1e-9 &&
+            extraBase  <= capRoom      + EPSILON &&
+            extraBase  <= recyclePool  + EPSILON) {
+          amounts[h.ticker]         = toBase(roundUpNative, h.currency);  // write back in BASE
+          recyclePool              -= extraBase;
+          tickerRoundedUp[h.ticker] = true;
+          didRoundUp = true;
+        }
+      }
+      if (!didRoundUp) {
+        const roundDownBase  = toBase(roundedDownNative, h.currency);  // BASE
+        const fracBase       = amounts[h.ticker] - roundDownBase;
+        amounts[h.ticker]    = roundDownBase;
+        recyclePool         += fracBase;
+        tickerRoundedUp[h.ticker] = false;
+      }
+    }
+  });
+  return recyclePool;
+}
+
+// ─── CALC ───
+let _calcTimer = null;
+const calcDebounced = () => { clearTimeout(_calcTimer); _calcTimer = setTimeout(calc, 180); };
+
+function calc() {
+  const EPSILON = 0.01;
+
+  const fixedFee = parseFloat(document.getElementById('fee-fixed').value) || 0;
+  const pctFee   = parseFloat(document.getElementById('fee-pct').value)   || 0;
+  const hasFees  = fixedFee > 0 || pctFee > 0;
+
+  const versionB    = document.getElementById('version-select').value === 'B' && hasFees;
+  const feeBudget   = parseFloat(document.getElementById('fee-budget').value)   || 0;
+  const overshootTol = parseFloat(document.getElementById('overshoot-tol').value) || 0;
+
+  const nonCash    = SLEEVES.filter(s => !s.isCash);
+  const cashSleeve = SLEEVES.find(s => s.isCash);
+
+  const targetSum = SLEEVES.reduce((a,s)=>a+s.target,0);
+  const warnEl = document.getElementById('target-warn');
+  warnEl.textContent = (Math.abs(targetSum - 100) > 0.01)
+    ? `⚠ Target allocation sums to ${targetSum.toFixed(1)}% — should be 100%.` : '';
+
+  const holdings     = readHoldings();
+  const newCash      = parseFloat(document.getElementById('cash').value)          || 0;
+  const existingCash = parseFloat(document.getElementById('existing-cash').value) || 0;
+
+  // ── Base-currency totals (display + allocation) ──
+  const _pendingHtml = '<span style="color:var(--muted);font-family:Inter,sans-serif;font-size:14px;letter-spacing:2px;">↻ pending</span>';
+  updateFxBanner();
+
+  const anyUnconvertible = holdings.some(h => h.valueBase === null);
+  let totalNowBase   = null;
+  let totalAfterBase = null;
+  if (!anyUnconvertible) {
+    totalNowBase = existingCash;
+    holdings.forEach(h => { totalNowBase += h.valueBase; });
+    totalAfterBase = totalNowBase + newCash;
+  }
+
+  // ── STAGE 3b: hard allocation gate — no plan when any active rate is missing ──
+  if (getMissingCurrencies().length > 0) {
+    document.getElementById('out-current').innerHTML   = _pendingHtml;
+    document.getElementById('out-after').innerHTML     = _pendingHtml;
+    document.getElementById('out-allocated').innerHTML = _pendingHtml;
+    document.getElementById('out-leftover').innerHTML  = _pendingHtml;
+    document.getElementById('fee-stat-box').style.display = 'none';
+    const barsEl = document.getElementById('sleeve-bars');
+    barsEl.innerHTML = '';
+    SLEEVES.forEach(s => {
+      const wrap = document.createElement('div');
+      wrap.className = 'sleeve-bar-wrap';
+      wrap.innerHTML = `
+        <div class="sleeve-bar-head">
+          <span class="name">${sleeveTag(s)}</span>
+          <span class="pct" style="color:var(--muted);">target ${s.target}% · ↻ rates pending</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-current" style="width:0%;background:${s.color};"></div>
+          <div class="bar-target-marker" style="left:${Math.min(100,s.target)}%"></div>
+        </div>`;
+      barsEl.appendChild(wrap);
+    });
+    const planEl = document.getElementById('plan-body');
+    planEl.innerHTML = '';
+    SLEEVES.forEach(s => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${sleeveTag(s)}</td>
+        <td style="color:var(--muted);">↻</td>
+        <td style="color:var(--muted);">↻</td>
+        <td>${s.target}%</td>
+        <td style="color:var(--muted);">—</td>
+        <td style="color:var(--muted);">↻ pending</td>`;
+      planEl.appendChild(tr);
+    });
+    const tickerPlanEl = document.getElementById('ticker-plan-body');
+    tickerPlanEl.innerHTML = '';
+    holdings.filter(h => SLEEVES.find(s => s.key === h.sleeveKey && !s.isCash)).forEach(h => {
+      const sleeve = SLEEVES.find(s => s.key === h.sleeveKey);
+      const currLabel = h.currency !== FX_BASE
+        ? `<span style="color:var(--gold);font-size:9px;">${escHtml(h.currency)}</span>`
+        : `<span style="color:var(--muted);font-size:9px;">${escHtml(h.currency)}</span>`;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="color:var(--text);font-weight:600;">${escHtml(h.ticker)}</td>
+        <td>${sleeve ? sleeveTag(sleeve) : h.sleeveKey}</td>
+        <td>${currLabel}</td>
+        <td style="color:var(--muted);">↻</td>
+        <td>—</td>
+        <td style="color:var(--muted);">↻</td>
+        <td style="color:var(--muted);">↻ pending</td>`;
+      tickerPlanEl.appendChild(tr);
+    });
+    return;
+  }
+
+  // ── ALLOCATION ENGINE — Stage 3b: fully BASE-currency, multi-pass ──
+  // Gate above guarantees all active rates are present (no nulls). existingCash / newCash are always base.
+  // cur[sleeve] sums h.valueBase (BASE). Every target-dollar, cap-room, and overshoot figure is in BASE.
+  // Unit counting in the rounding gate converts BASE → native → floor(÷nativePrice) → back to BASE.
+
+  // curInitial: pre-deploy sleeve values saved for display ("Current %" column).
+  // cur: mutable working copy updated between passes to reflect executed trades.
+  const curInitial = {};
+  SLEEVES.forEach(s => { curInitial[s.key] = 0; });
+  if (cashSleeve) curInitial[cashSleeve.key] = existingCash;
+  holdings.forEach(h => { if (curInitial[h.sleeveKey] !== undefined) curInitial[h.sleeveKey] += h.valueBase; });
+
+  // totalNowBase / totalAfterBase are non-null here (gate passed).
+  const totalNow   = totalNowBase;    // BASE
+  const totalAfter = totalAfterBase;  // BASE  — computed ONCE, never recomputed inside the loop
+
+  const cashPct        = totalAfter > 0 ? (existingCash / totalAfter) * 100 : 0;
+  const cashTargetPct  = cashSleeve ? cashSleeve.target : 0;
+  const cashLowThresh  = 1;
+  const cashHighThresh = cashTargetPct;
+
+  // ── Multi-pass accumulators ──
+  const cumulativeUnits    = {};
+  const cumulativeBuyBase  = {};
+  const cumulativeSleeveBuy = {};
+  const feesPaidTickers    = new Set();
+  holdings.forEach(h => { cumulativeUnits[h.ticker] = 0; cumulativeBuyBase[h.ticker] = 0; });
+  SLEEVES.forEach(s => { cumulativeSleeveBuy[s.key] = 0; });
+
+  const allCutTickers      = [];
+  const allTickerRoundedUp = {};
+
+  // ── Convergence threshold: smallest whole-unit ticker price in BASE ──
+  const wholePrices   = holdings.filter(h => !h.fractionable && h.price > 0).map(h => toBase(h.price, h.currency) || Infinity);
+  const minUnitPrice  = wholePrices.length > 0 ? Math.min(...wholePrices) : Infinity;
+  const loopThreshold = isFinite(minUnitPrice) ? minUnitPrice - EPSILON : EPSILON;
+
+  const cur = { ...curInitial };  // mutable working copy
+
+  let passRemaining        = newCash;
+  let prevRemaining        = newCash + 1;  // sentinel so first pass always runs
+  let totalCashReserve     = 0;
+  let totalCutLeftover     = 0;
+  let totalFeeFromReserve  = 0;
+  let totalFeeFromExisting = 0;
+  let totalFeeFromStocks   = 0;
+  let passCount            = 0;
+  const MAX_PASSES         = 10;
+
+  for (let pass = 0; pass < MAX_PASSES; pass++) {
+    if (passRemaining <= loopThreshold) break;
+    if (passRemaining >= prevRemaining - EPSILON && pass > 0) break;
+    prevRemaining = passRemaining;
+    passCount++;
+
+    // ── Per-pass sleeve allocation ──
+    const buy = {};
+    SLEEVES.forEach(s => { buy[s.key] = 0; });
+    let remaining   = passRemaining;
+    let cashReserve = 0;
+
+    // Cash floor reserve: only on pass 0 (existingCash is constant; condition doesn't change)
+    if (pass === 0 && cashSleeve && cashPct < cashLowThresh && cashPct < cashTargetPct) {
+      const cashFloor  = totalAfter * (cashLowThresh / 100);
+      const cashNeeded = Math.max(0, cashFloor - existingCash);
+      cashReserve = Math.min(remaining, cashNeeded);
+      buy[cashSleeve.key] = cashReserve;
+      remaining -= cashReserve;
+    }
+
+    if (remaining > 0 && pass === 0) {
+      const need = {};
+      let totalNeed = 0;
+      nonCash.forEach(s => {
+        const n = Math.max(0, totalAfter * (s.target / 100) - cur[s.key]);
+        need[s.key] = n; totalNeed += n;
+      });
+
+      if (totalNeed > 0) {
+        if (remaining >= totalNeed) {
+          nonCash.forEach(s => { buy[s.key] = need[s.key]; });
+          let afterFill = remaining - totalNeed;
+          if (pass === 0 && cashSleeve && cashPct >= cashLowThresh && cashPct < cashHighThresh && afterFill > 0) {
+            const cashNeeded = Math.max(0, totalAfter * (cashTargetPct / 100) - existingCash);
+            const cashTopUp  = Math.min(afterFill, cashNeeded);
+            buy[cashSleeve.key] = (buy[cashSleeve.key] || 0) + cashTopUp;
+            cashReserve += cashTopUp;
+            afterFill   -= cashTopUp;
+          }
+          if (afterFill > 0) {
+            const investSum = nonCash.reduce((a,s)=>a+s.target,0) || 1;
+            nonCash.forEach(s => { buy[s.key] += afterFill * (s.target / investSum); });
+          }
+          remaining = 0;
+        } else {
+          nonCash.forEach(s => { buy[s.key] = remaining * (need[s.key] / totalNeed); });
+          remaining = 0;
+        }
+      } else {
+        if (pass === 0 && cashSleeve && cashPct < cashHighThresh) {
+          const cashNeeded = Math.max(0, totalAfter * (cashTargetPct / 100) - existingCash);
+          const cashTopUp  = Math.min(remaining, cashNeeded);
+          buy[cashSleeve.key] = (buy[cashSleeve.key] || 0) + cashTopUp;
+          cashReserve += cashTopUp;
+          remaining   -= cashTopUp;
+        }
+        if (remaining > 0 && nonCash.length > 0) {
+          const investSum = nonCash.reduce((a,s)=>a+s.target,0) || 1;
+          nonCash.forEach(s => { buy[s.key] += remaining * (s.target / investSum); });
+          remaining = 0;
+        }
+      }
+    }
+
+    if (remaining > 0 && pass > 0) {
+      // ── Smart allocation for pass 2+: gap-weighted, absorbable sleeves only ──
+
+      // Step 1: compute gap for each non-cash sleeve
+      // gap = target% − current% (always positive if sleeve is under target)
+      const gap = {};
+      nonCash.forEach(s => {
+        const curPct = totalAfter > 0 ? (cur[s.key] / totalAfter) * 100 : 0;
+        gap[s.key] = Math.max(0, s.target - curPct);
+      });
+
+      // Step 2: identify absorbable sleeves
+      // A sleeve is absorbable if it has at least one ticker that can absorb funds:
+      //   - fractionable: always absorbable (any amount works)
+      //   - whole-unit: absorbable if capRoom > 0 AND toBase(price, currency) <= sleeveShare
+      // We use an iterative check: first pass with equal share, refine once.
+      const sleeveMinCost = {};  // minimum BASE cost to buy one unit in this sleeve
+      nonCash.forEach(s => {
+        const sleeveHoldings = holdings.filter(h => h.sleeveKey === s.key);
+        let minCost = Infinity;
+        sleeveHoldings.forEach(h => {
+          if (h.price <= 0) return;
+          const capRoom = h.maxPct !== null
+            ? Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase - (cumulativeBuyBase[h.ticker] || 0))
+            : Infinity;
+          if (capRoom <= 0) return;  // fully capped
+          if (h.fractionable) {
+            minCost = 0;  // fractionable: any amount is fine
+          } else {
+            const unitCostBase = toBase(h.price, h.currency) || Infinity;
+            if (unitCostBase < minCost) minCost = unitCostBase;
+          }
+        });
+        sleeveMinCost[s.key] = minCost;
+      });
+
+      // Step 3: gap-weighted distribution — iterative, excluding sleeves that can't absorb
+      let pool = remaining;
+      let eligible = nonCash.filter(s => gap[s.key] > 0 && sleeveMinCost[s.key] < Infinity);
+
+      // If no sleeve has gap > 0 but some can still absorb (all at/above target),
+      // fall back to all sleeves with absorbable tickers, weighted by target%
+      if (eligible.length === 0) {
+        eligible = nonCash.filter(s => sleeveMinCost[s.key] < Infinity);
+      }
+
+      // If still nothing absorbable, leave remaining unchanged (will become Cash Left)
+      if (eligible.length > 0) {
+        let iter = 20;
+        while (pool > 0.01 && eligible.length > 0 && iter-- > 0) {
+          // Weight = gap (or target% as fallback)
+          const totalWeight = eligible.reduce((sum, s) => sum + (gap[s.key] || s.target), 0) || 1;
+          let overflow = 0;
+          const nextEligible = [];
+
+          eligible.forEach(s => {
+            const weight = (gap[s.key] || s.target) / totalWeight;
+            const share  = pool * weight;
+            const minCost = sleeveMinCost[s.key];
+
+            if (share < minCost) {
+              // This sleeve can't absorb its share — overflow it
+              overflow += share;
+            } else {
+              buy[s.key] = (buy[s.key] || 0) + share;
+              nextEligible.push(s);
+            }
+          });
+
+          pool = overflow;
+          eligible = nextEligible;
+
+          // Recheck: if remaining pool is now large enough for previously excluded sleeves,
+          // add them back. Recompute eligible from scratch with updated pool.
+          if (overflow > 0) {
+            eligible = nonCash.filter(s =>
+              sleeveMinCost[s.key] < Infinity &&
+              sleeveMinCost[s.key] <= pool * ((gap[s.key] || s.target) /
+                (nonCash.reduce((sum, sx) => sum + (gap[sx.key] || sx.target), 0) || 1))
+            );
+          }
+        }
+        // ── Full-pool fallback: if pool remains and no sleeve got its share,
+        //    give the entire pool to whichever sleeve can absorb it ──
+        if (pool > 0.01) {
+          // Find sleeve with largest gap that can absorb the full pool
+          let fallbackSleeve = null;
+          let fallbackGap    = -Infinity;
+          nonCash.forEach(s => {
+            if (sleeveMinCost[s.key] > pool) return; // can't absorb even 1 unit
+            const g = gap[s.key] || s.target;
+            if (g > fallbackGap) { fallbackGap = g; fallbackSleeve = s; }
+          });
+          if (fallbackSleeve) {
+            buy[fallbackSleeve.key] = (buy[fallbackSleeve.key] || 0) + pool;
+            pool = 0;
+          }
+        }
+        remaining = pool;
+      }
+      // (if eligible was empty, remaining stays unchanged → Cash Left)
+    }
+
+    // ─── Ticker-level allocation ───
+    const tickerBuy      = {};
+    const tickerUnits    = {};
+    const tickerRoundedUp = {};
+
+    nonCash.forEach(s => {
+      const sleeveHoldings = holdings.filter(h => h.sleeveKey === s.key);
+      if (!sleeveHoldings.length) return;
+
+      let pool = buy[s.key];
+      const alloc = {};
+      sleeveHoldings.forEach(h => { alloc[h.ticker] = 0; });
+      let eligible = [...sleeveHoldings];
+      let maxIter = 20;
+      while (pool > 0.01 && eligible.length > 0 && maxIter-- > 0) {
+        const perTicker = pool / eligible.length;
+        let overflow = 0;
+        const nextEligible = [];
+        eligible.forEach(h => {
+          if (h.maxPct !== null) {
+            const room = Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase - alloc[h.ticker]);
+            if (room <= 0)             { overflow += perTicker; }
+            else if (perTicker > room) { alloc[h.ticker] += room; overflow += (perTicker - room); }
+            else                       { alloc[h.ticker] += perTicker; nextEligible.push(h); }
+          } else {
+            alloc[h.ticker] += perTicker;
+            nextEligible.push(h);
+          }
+        });
+        pool = overflow;
+        eligible = nextEligible;
+      }
+      // Return cap overflow to remaining so the next pass can re-deploy it
+      // to other sleeves that still have room. Without this, any pool left
+      // when eligible empties (all tickers at maxPct) is silently lost.
+      if (pool > 0.001) remaining += pool;
+
+      const recyclePool = applyWholeUnitRoundingGate(
+        sleeveHoldings, alloc, 0, totalAfter, overshootTol, tickerRoundedUp, EPSILON
+      );
+
+      if (recyclePool > 0.001) {
+        let fracPool = recyclePool;
+        let fracElig = sleeveHoldings.filter(h => {
+          if (!h.fractionable) return false;
+          if (h.maxPct === null) return true;
+          return Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase - alloc[h.ticker]) > 0.001;
+        });
+        let fracIter = 20;
+        while (fracPool > 0.001 && fracElig.length > 0 && fracIter-- > 0) {
+          const perFrac = fracPool / fracElig.length;
+          let fracOverflow = 0;
+          const nextFracElig = [];
+          fracElig.forEach(h => {
+            if (h.maxPct !== null) {
+              const room = Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase - alloc[h.ticker]);
+              if (room <= 0)           { fracOverflow += perFrac; }
+              else if (perFrac > room) { alloc[h.ticker] += room; fracOverflow += (perFrac - room); }
+              else                     { alloc[h.ticker] += perFrac; nextFracElig.push(h); }
+            } else {
+              alloc[h.ticker] += perFrac;
+              nextFracElig.push(h);
+            }
+          });
+          fracPool = fracOverflow;
+          fracElig = nextFracElig;
+        }
+        if (fracPool > 0.001) {
+          // Pass 2+: try to concentrate fracPool on most expensive affordable whole-unit ticker
+          // rather than losing it to Cash Left.
+          let concentrated = false;
+          if (pass > 0) {
+            let bestH    = null;
+            let bestCost = 0;
+            sleeveHoldings.forEach(h => {
+              if (h.fractionable || h.price <= 0) return;
+              const unitCostBase = toBase(h.price, h.currency) || Infinity;
+              if (unitCostBase > fracPool) return; // can't afford 1 unit
+              const capRoom = h.maxPct !== null
+                ? Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase
+                    - (cumulativeBuyBase[h.ticker] || 0) - (alloc[h.ticker] || 0))
+                : Infinity;
+              if (capRoom <= 0) return;
+              if (unitCostBase > bestCost) { bestCost = unitCostBase; bestH = h; }
+            });
+            if (bestH) {
+              const capRoom = bestH.maxPct !== null
+                ? Math.max(0, totalAfter * (bestH.maxPct / 100) - bestH.valueBase
+                    - (cumulativeBuyBase[bestH.ticker] || 0) - (alloc[bestH.ticker] || 0))
+                : Infinity;
+              const canAdd = Math.min(fracPool, capRoom);
+              alloc[bestH.ticker] = (alloc[bestH.ticker] || 0) + canAdd;
+              const leftover = fracPool - canAdd;
+              if (leftover > 0.001) remaining += leftover;
+              concentrated = true;
+            }
+          }
+          if (!concentrated) remaining += fracPool;
+        }
+      }
+
+      sleeveHoldings.forEach(h => {
+        if (h.price > 0 && alloc[h.ticker] > 0) {
+          // alloc is in BASE; convert to native for share counting
+          const allocNative = fromBase(alloc[h.ticker], h.currency);
+          tickerUnits[h.ticker] = h.fractionable
+            ? allocNative / h.price
+            : Math.floor(allocNative / h.price);
+        } else {
+          tickerUnits[h.ticker] = 0;
+        }
+        const finalBase = h.fractionable
+          ? alloc[h.ticker]
+          : toBase(tickerUnits[h.ticker] * h.price, h.currency);
+        tickerBuy[h.ticker] = (tickerBuy[h.ticker] || 0) + (finalBase ?? 0);  // BASE
+      });
+
+      // Reconcile sleeve buy total to match actual post-rounding ticker purchases.
+      buy[s.key] = sleeveHoldings.reduce((sum, h) => sum + (tickerBuy[h.ticker] || 0), 0);
+    });
+
+    // ─── Version B trade-cutting loop ───
+    let cutLeftover = 0;
+    const cutTickers = [];
+
+    if (versionB && feeBudget > 0) {
+      const computeTotalFees = () => {
+        let f = 0;
+        Object.values(tickerBuy).forEach(amt => {
+          if (amt > 0.001) f += fixedFee + (pctFee / 100) * amt;
+        });
+        return f;
+      };
+
+      let currentFees = computeTotalFees();
+
+      while (currentFees > feeBudget) {
+        const activeTrades = Object.entries(tickerBuy)
+          .filter(([, amt]) => amt > 0.001)
+          .sort(([, a], [, b]) => a - b);
+
+        if (activeTrades.length <= 1) break;
+
+        const [smallestTicker, smallestAmt] = activeTrades[0];
+
+        tickerBuy[smallestTicker]   = 0;
+        tickerUnits[smallestTicker] = 0;
+        cutTickers.push(smallestTicker);
+
+        const cancelledH      = holdings.find(h => h.ticker === smallestTicker);
+        const sleeveSurvivors = cancelledH
+          ? holdings.filter(h => h.sleeveKey === cancelledH.sleeveKey && tickerBuy[h.ticker] > 0.001)
+          : [];
+
+        if (sleeveSurvivors.length === 0) {
+          cutLeftover += smallestAmt;
+        } else {
+          let pool = smallestAmt;
+          const addAlloc = {};
+          sleeveSurvivors.forEach(h => { addAlloc[h.ticker] = 0; });
+          let eligib = [...sleeveSurvivors];
+          let itr = 20;
+          while (pool > 0.01 && eligib.length > 0 && itr-- > 0) {
+            const perT = pool / eligib.length;
+            let overflow = 0;
+            const nextEligib = [];
+            eligib.forEach(h => {
+              if (h.maxPct !== null) {
+                const room = Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase - tickerBuy[h.ticker] - addAlloc[h.ticker]);
+                if (room <= 0)        { overflow += perT; }
+                else if (perT > room) { addAlloc[h.ticker] += room; overflow += (perT - room); }
+                else                  { addAlloc[h.ticker] += perT; nextEligib.push(h); }
+              } else {
+                addAlloc[h.ticker] += perT;
+                nextEligib.push(h);
+              }
+            });
+            pool = overflow;
+            eligib = nextEligib;
+          }
+          cutLeftover += pool;
+
+          const newTotals = {};
+          sleeveSurvivors.forEach(h => { newTotals[h.ticker] = tickerBuy[h.ticker] + addAlloc[h.ticker]; });
+
+          const roundRemainder = applyWholeUnitRoundingGate(
+            sleeveSurvivors, newTotals, 0, totalAfter, overshootTol, tickerRoundedUp, EPSILON
+          );
+
+          sleeveSurvivors.forEach(h => {
+            if (h.price > 0) {
+              const nativeAmt = fromBase(newTotals[h.ticker], h.currency);
+              if (!h.fractionable) {
+                tickerUnits[h.ticker]  = Math.floor(nativeAmt / h.price);
+                const syncedBase       = toBase(tickerUnits[h.ticker] * h.price, h.currency);  // BASE
+                const syncFraction     = newTotals[h.ticker] - (syncedBase ?? newTotals[h.ticker]);
+                if (syncFraction > 0) cutLeftover += syncFraction;
+                tickerBuy[h.ticker]    = syncedBase ?? 0;  // BASE
+              } else {
+                tickerUnits[h.ticker] = nativeAmt / h.price;
+                tickerBuy[h.ticker]   = newTotals[h.ticker];  // BASE
+              }
+            } else {
+              tickerUnits[h.ticker] = 0;
+              tickerBuy[h.ticker]   = 0;
+            }
+          });
+
+          if (roundRemainder > 0.001) {
+            let fracSurv = sleeveSurvivors.filter(h => {
+              if (!h.fractionable) return false;
+              if (h.maxPct === null) return true;
+              return Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase - tickerBuy[h.ticker]) > 0.001;
+            });
+            let fPool = roundRemainder;
+            let fIter = 20;
+            while (fPool > 0.001 && fracSurv.length > 0 && fIter-- > 0) {
+              const perFrac = fPool / fracSurv.length;
+              let fOverflow = 0;
+              const nextFrac = [];
+              fracSurv.forEach(h => {
+                if (h.maxPct !== null) {
+                  const room = Math.max(0, totalAfter * (h.maxPct / 100) - h.valueBase - tickerBuy[h.ticker]);
+                  if (room <= 0)            { fOverflow += perFrac; }
+                  else if (perFrac > room)  { tickerBuy[h.ticker] += room; fOverflow += (perFrac - room); }
+                  else                      { tickerBuy[h.ticker] += perFrac; nextFrac.push(h); }
+                } else {
+                  tickerBuy[h.ticker] += perFrac;
+                  nextFrac.push(h);
+                }
+              });
+              fPool = fOverflow;
+              fracSurv = nextFrac;
+            }
+            sleeveSurvivors.filter(h => h.fractionable && h.price > 0).forEach(h => {
+              tickerUnits[h.ticker] = fromBase(tickerBuy[h.ticker], h.currency) / h.price;
+            });
+            cutLeftover += fPool;
+          }
+        }
+
+        const newFees = computeTotalFees();
+        if (newFees >= currentFees) break;
+        currentFees = newFees;
+      }
+    }
+
+    // ─── Fee computation + cascade ───
+    let passTotalFees   = 0;
+    let feeFromReserve  = 0;
+    let feeFromExisting = 0;
+    let feeFromStocks   = 0;
+
+    if (hasFees) {
+      Object.values(tickerBuy).forEach(amt => {
+        if (amt > 0.001) passTotalFees += fixedFee + (pctFee / 100) * amt;
+      });
+
+      if (passTotalFees > 0) {
+        feeFromReserve = Math.min(passTotalFees, cashReserve);
+        let feesLeft = passTotalFees - feeFromReserve;
+
+        if (feesLeft > 0) {
+          const avail = Math.max(0, existingCash - EPSILON);
+          feeFromExisting = Math.min(feesLeft, avail);
+          feesLeft -= feeFromExisting;
+        }
+
+        if (feesLeft > 0) {
+          const totalStockBuy = Object.values(tickerBuy).reduce((a,b)=>a+b,0);
+          const canRaid = Math.max(0, totalStockBuy - EPSILON);
+          feeFromStocks = Math.min(feesLeft, canRaid);
+          if (feeFromStocks > 0 && totalStockBuy > EPSILON) {
+            const scale = (totalStockBuy - feeFromStocks) / totalStockBuy;
+            Object.keys(tickerBuy).forEach(ticker => {
+              tickerBuy[ticker] *= scale;
+              const h = holdings.find(h2 => h2.ticker === ticker);
+              if (h && h.price > 0 && tickerBuy[ticker] > 0) {
+                if (!h.fractionable) {
+                  // tickerBuy is in BASE after fee-raid scaling; convert to native for unit floor
+                  const nativeScaled     = fromBase(tickerBuy[ticker], h.currency);
+                  tickerUnits[ticker]    = Math.floor(nativeScaled / h.price);
+                  const roundedDownBase  = toBase(tickerUnits[ticker] * h.price, h.currency);  // BASE
+                  const feeFraction      = (tickerBuy[ticker] ?? 0) - (roundedDownBase ?? 0);
+                  if (feeFraction > 0) remaining += feeFraction;
+                  tickerBuy[ticker]      = roundedDownBase;  // BASE
+                } else {
+                  tickerUnits[ticker] = fromBase(tickerBuy[ticker], h.currency) / h.price;
+                }
+              } else {
+                tickerUnits[ticker] = 0;
+                tickerBuy[ticker]   = 0;
+              }
+            });
+          }
+        }
+      }
+    }
+
+    // ── Merge this pass into cumulatives ──
+    holdings.forEach(h => {
+      const units = tickerUnits[h.ticker] || 0;
+      const buyB  = tickerBuy[h.ticker]   || 0;
+      if (units > 0 || buyB > 0) feesPaidTickers.add(h.ticker);
+      cumulativeUnits[h.ticker]   += units;
+      cumulativeBuyBase[h.ticker] += buyB;
+    });
+    Object.keys(tickerRoundedUp).forEach(t => { if (tickerRoundedUp[t]) allTickerRoundedUp[t] = true; });
+    cutTickers.forEach(t => { if (!allCutTickers.includes(t)) allCutTickers.push(t); });
+    nonCash.forEach(s => { cumulativeSleeveBuy[s.key] += buy[s.key]; });
+    totalCashReserve     += cashReserve;
+    totalCutLeftover     += cutLeftover;
+    totalFeeFromReserve  += feeFromReserve;
+    totalFeeFromExisting += feeFromExisting;
+    totalFeeFromStocks   += feeFromStocks;
+
+    // ── Update cur[] for next pass (simulate trade execution) ──
+    holdings.forEach(h => {
+      const buyB = tickerBuy[h.ticker] || 0;
+      if (buyB > 0 && cur[h.sleeveKey] !== undefined) cur[h.sleeveKey] += buyB;
+    });
+
+    passRemaining = remaining;
+  }
+
+  // ── Recompute total fees from cumulative amounts (one fixed fee per ticker) ──
+  let totalFees = 0;
+  if (hasFees) {
+    feesPaidTickers.forEach(ticker => {
+      const amt = cumulativeBuyBase[ticker] || 0;
+      if (amt > 0.001) totalFees += fixedFee + (pctFee / 100) * amt;
+    });
+  }
+
+  const allocated     = Object.values(cumulativeBuyBase).reduce((a, b) => a + b, 0);
+  const leftover      = passRemaining;
+  const finalLeftover = passRemaining + totalCashReserve + totalCutLeftover;
+
+  // ─── BASE reconciliation (Stage 3b) ───
+  // Conservation: every dollar of newCash ends up in one of five buckets:
+  //   allocated        — stocks purchased (already reduced by feeFromStocks)
+  //   totalCashReserve — full cashReserve amount (feeFromReserve is internal to it)
+  //   totalCutLeftover — Version B cut money that couldn't redistribute
+  //   passRemaining    — true undeployed leftover after all passes
+  //   totalFeeFromStocks — fees raided from stock allocation (not in allocated, not in remaining)
+  // Note: totalFeeFromExisting is paid from existingCash (not newCash) — excluded.
+  {
+    const totalOut = allocated + totalCashReserve + totalCutLeftover + passRemaining + totalFeeFromStocks;
+    if (Math.abs(totalOut - newCash) >= Math.max(EPSILON * 100, loopThreshold + 1)) {
+      (console.warn || console.log)(`[3b reconcile] out=${totalOut.toFixed(4)} newCash=${newCash.toFixed(4)} diff=${(totalOut-newCash).toFixed(6)}`);
+    }
+  }
+
+  // ─── UI: summary stats (Portfolio Value / After Deploy use base-converted totals) ───
+  // After the gate, totalNowBase / totalAfterBase are guaranteed non-null.
+  // setStat: write text and replay the value-pop animation only when the value actually changes.
+  const setStat = (id, text) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.textContent !== text) {
+      el.textContent = text;
+      el.classList.remove('value-update');
+      void el.offsetWidth;            // force reflow so the animation can restart
+      el.classList.add('value-update');
+    }
+  };
+  setStat('out-current',   fmt(totalNowBase));
+  setStat('out-after',     fmt(totalAfterBase));
+  setStat('out-allocated', fmt(allocated));
+  setStat('out-leftover',  fmt(finalLeftover));
+
+  const feeStatBox = document.getElementById('fee-stat-box');
+  if (hasFees && totalFees > 0) {
+    feeStatBox.style.display = '';
+    setStat('out-fees', fmt(totalFees, 2));
+  } else {
+    feeStatBox.style.display = 'none';
+  }
+
+  // ─── Bars (curInitial and totalNow are both BASE — correct pre-deploy percentages) ───
+  const barsEl = document.getElementById('sleeve-bars');
+  barsEl.innerHTML = '';
+  SLEEVES.forEach(s => {
+    const curPct = totalNow > 0 ? (curInitial[s.key] / totalNow) * 100 : 0;
+    const wrap = document.createElement('div');
+    wrap.className = 'sleeve-bar-wrap';
+    wrap.innerHTML = `
+      <div class="sleeve-bar-head">
+        <span class="name">${sleeveTag(s)}</span>
+        <span class="pct">${curPct.toFixed(1)}% → target ${s.target}%</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-current" style="width:${Math.min(100,curPct)}%;background:${s.color};"></div>
+        <div class="bar-target-marker" style="left:${Math.min(100,s.target)}%"></div>
+      </div>`;
+    barsEl.appendChild(wrap);
+  });
+
+  // ─── Sleeve plan table ───
+  const planEl = document.getElementById('plan-body');
+  planEl.innerHTML = '';
+  SLEEVES.forEach(s => {
+    const curPct = totalNow > 0 ? (curInitial[s.key] / totalNow) * 100 : 0;
+    const gap    = s.target - curPct;
+    let buyDisplay;
+    if (s.isCash) {
+      buyDisplay = totalCashReserve > 0.5
+        ? `<span class="buy-amt">${fmt(totalCashReserve)} <span style="color:var(--muted);font-weight:400;">(reserve)</span></span>`
+        : '<span class="zero-amt">—</span>';
+    } else {
+      buyDisplay = cumulativeSleeveBuy[s.key] > 0.5
+        ? `<span class="buy-amt">${fmt(cumulativeSleeveBuy[s.key])}</span>`
+        : '<span class="zero-amt">—</span>';
+    }
+    // cur[s.key] is already updated with all pass buys; use it directly for afterPct
+    const afterPct = totalAfter > 0
+      ? (s.isCash ? (existingCash + totalCashReserve) : cur[s.key]) / totalAfter * 100 : 0;
+    const afterColor = Math.abs(afterPct - s.target) < 0.5 ? 'var(--green)' : afterPct > s.target ? 'var(--red)' : 'var(--gold)';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${sleeveTag(s)}</td>
+      <td>${curPct.toFixed(1)}%</td>
+      <td style="color:${afterColor};font-weight:600;">${afterPct.toFixed(1)}%</td>
+      <td>${s.target}%</td>
+      <td style="color:${gap>0.05?'var(--green)':'var(--muted)'}">${gap>0?'+':''}${gap.toFixed(1)}%</td>
+      <td>${buyDisplay}</td>`;
+    planEl.appendChild(tr);
+  });
+
+  // ─── Ticker breakdown table ───
+  const tickerPlanEl = document.getElementById('ticker-plan-body');
+  tickerPlanEl.innerHTML = '';
+  const investHoldings = holdings.filter(h => SLEEVES.find(s => s.key === h.sleeveKey && !s.isCash));
+  investHoldings.forEach(h => {
+    const sleeve       = SLEEVES.find(s => s.key === h.sleeveKey);
+    const curPct       = totalNow > 0 ? (h.valueBase / totalNow) * 100 : 0;  // BASE / BASE
+    const buyAmtBase   = cumulativeBuyBase[h.ticker] || 0;    // BASE
+    // Convert BASE buy to native for broker-facing display
+    const buyAmtNative = buyAmtBase > 0 ? (fromBase(buyAmtBase, h.currency) || 0) : 0;
+    const units        = cumulativeUnits[h.ticker]   || 0;
+    const roundedUp    = allTickerRoundedUp[h.ticker] || false;
+    const wasCut       = allCutTickers.includes(h.ticker);
+    const atCap        = h.maxPct !== null && curPct >= h.maxPct - 0.05;
+    const maxDisplay   = h.maxPct !== null
+      ? `<span style="color:${atCap ? 'var(--red)' : 'var(--purple)'};">${h.maxPct}%${atCap ? ' ⚠' : ''}</span>`
+      : '<span class="zero-amt">—</span>';
+    // $ To Buy shown in native currency (what you actually execute at the broker)
+    const buyDisplay = wasCut
+      ? `<span style="color:var(--muted);text-decoration:line-through;">cut</span>`
+      : buyAmtNative > 0.01
+        ? `<span class="buy-amt">${fmtNative(buyAmtNative, h.currency, 2)}</span>`
+        : '<span class="zero-amt">—</span>';
+    const fracLabel = h.fractionable ? '<span style="color:var(--blue);font-size:9px;">FRAC</span>' : '';
+    const currLabel = h.currency !== FX_BASE
+      ? `<span style="color:var(--gold);font-size:9px;">${escHtml(h.currency)}</span>`
+      : `<span style="color:var(--muted);font-size:9px;">${escHtml(h.currency)}</span>`;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:${wasCut?'var(--muted)':'var(--text)'};font-weight:600;${wasCut?'text-decoration:line-through;':''}">${h.ticker} ${fracLabel}</td>
+      <td>${sleeve ? sleeveTag(sleeve) : h.sleeveKey}</td>
+      <td>${currLabel}</td>
+      <td>${curPct.toFixed(1)}%</td>
+      <td>${maxDisplay}</td>
+      <td>${wasCut ? '<span class="zero-amt">cut</span>' : fmtUnits(units, h.fractionable, roundedUp)}</td>
+      <td>${buyDisplay}</td>`;
+    tickerPlanEl.appendChild(tr);
+  });
+}
+
+// ─── PERSISTENCE ───
+const LS_KEY = 'salary2045_v3';   // bumped from v2 to avoid collision with v5 state
+
+function saveState() {
+  const holdings = [];
+  document.querySelectorAll('#holdings-body tr').forEach(tr => {
+    holdings.push({
+      ticker:       tr.querySelector('.h-ticker').value.trim().toUpperCase(),
+      sleeveKey:    tr.querySelector('.h-sleeve').value,
+      shares:       tr.querySelector('.h-shares').value,
+      price:        tr.querySelector('.h-price').value,
+      maxPct:       tr.querySelector('.h-maxpct').value,
+      fractionable: tr.querySelector('.h-frac').checked,
+      currency:     tr.querySelector('.h-currency')?.value?.trim().toUpperCase() || FX_BASE,
+    });
+  });
+  const state = {
+    sleeves:       SLEEVES.map(s => ({ key: s.key, name: s.name, color: s.color, target: s.target, isCash: s.isCash })),
+    holdings,
+    cash:          document.getElementById('cash').value,
+    existingCash:  document.getElementById('existing-cash').value,
+    feeFixed:      document.getElementById('fee-fixed').value,
+    feePct:        document.getElementById('fee-pct').value,
+    versionSelect: document.getElementById('version-select').value,
+    feeBudget:     document.getElementById('fee-budget').value,
+    overshootTol:  document.getElementById('overshoot-tol').value,
+    // Stage 3: FX state
+    fxBase:        FX_BASE,
+    fxRates:       FX_RATES,
+    fxTimestamp:   FX_TIMESTAMP,
+  };
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+    // Show autosave indicator
+    const dot = document.getElementById('autosave-dot');
+    if (dot) {
+      dot.classList.add('show');
+      clearTimeout(dot._timer);
+      dot._timer = setTimeout(() => dot.classList.remove('show'), 1800);
+    }
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    if (state.sleeves && state.sleeves.length) {
+      SLEEVES = state.sleeves.map(s => ({ ...s }));
+      SLEEVES.forEach(s => {
+        const n = parseInt(s.key.replace('sl_',''));
+        if (!isNaN(n) && n > _sleeveCounter) _sleeveCounter = n;
+      });
+    }
+    if (state.cash          !== undefined) document.getElementById('cash').value           = state.cash;
+    if (state.existingCash  !== undefined) document.getElementById('existing-cash').value  = state.existingCash;
+    if (state.feeFixed      !== undefined) document.getElementById('fee-fixed').value      = state.feeFixed;
+    if (state.feePct        !== undefined) document.getElementById('fee-pct').value        = state.feePct;
+    if (state.versionSelect !== undefined) document.getElementById('version-select').value = state.versionSelect;
+    if (state.feeBudget     !== undefined) document.getElementById('fee-budget').value     = state.feeBudget;
+    if (state.overshootTol  !== undefined) document.getElementById('overshoot-tol').value  = state.overshootTol;
+    // Stage 3: restore FX state
+    if (state.fxBase)      { FX_BASE      = state.fxBase; }
+    if (state.fxRates)     { FX_RATES     = state.fxRates; }
+    if (state.fxTimestamp) { FX_TIMESTAMP = state.fxTimestamp; }
+
+    applyVersionUI();
+    updateBaseDisplay();
+    renderSleeveEditor();
+    if (state.holdings && state.holdings.length) {
+      document.getElementById('holdings-body').innerHTML = '';
+      state.holdings.forEach(h => addHoldingRow(h));
+      renderRateTable();
+      // Show cached rate timestamp if available
+      if (FX_TIMESTAMP) {
+        const statusEl = document.getElementById('fx-status');
+        if (statusEl) {
+          statusEl.style.color = 'var(--muted)';
+          statusEl.textContent = `Using cached rates from ${new Date(FX_TIMESTAMP).toLocaleString()}. Click ↻ to refresh.`;
+        }
+      }
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
+function initDefaultSleeves() {
+  _sleeveCounter = 0;
+  SLEEVES = DEFAULT_SLEEVES.map(s => ({ ...s, key: genKey() }));
+}
+
+// ─── EXPORT / IMPORT ───
+function exportJSON() {
+  const holdings = [];
+  document.querySelectorAll('#holdings-body tr').forEach(tr => {
+    holdings.push({
+      ticker:       tr.querySelector('.h-ticker').value.trim().toUpperCase(),
+      sleeveKey:    tr.querySelector('.h-sleeve').value,
+      shares:       tr.querySelector('.h-shares').value,
+      price:        tr.querySelector('.h-price').value,
+      maxPct:       tr.querySelector('.h-maxpct').value,
+      fractionable: tr.querySelector('.h-frac').checked,
+      currency:     tr.querySelector('.h-currency')?.value?.trim().toUpperCase() || FX_BASE,
+    });
+  });
+  const state = {
+    exported:      new Date().toISOString().slice(0,10),
+    version:       'v6',
+    sleeves:       SLEEVES.map(s => ({ key: s.key, name: s.name, color: s.color, target: s.target, isCash: s.isCash })),
+    holdings,
+    cash:          document.getElementById('cash').value,
+    existingCash:  document.getElementById('existing-cash').value,
+    feeFixed:      document.getElementById('fee-fixed').value,
+    feePct:        document.getElementById('fee-pct').value,
+    versionSelect: document.getElementById('version-select').value,
+    feeBudget:     document.getElementById('fee-budget').value,
+    overshootTol:  document.getElementById('overshoot-tol').value,
+    // Stage 3
+    fxBase:        FX_BASE,
+    fxRates:       FX_RATES,
+    fxTimestamp:   FX_TIMESTAMP,
+  };
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `salary2045_${state.exported}.json`;
+  a.click();
+}
+
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const state = JSON.parse(e.target.result);
+      if (state.sleeves && state.sleeves.length) {
+        SLEEVES = state.sleeves.map(s => ({ ...s }));
+        SLEEVES.forEach(s => { const n=parseInt(s.key.replace('sl_','')); if (!isNaN(n)&&n>_sleeveCounter) _sleeveCounter=n; });
+      }
+      if (state.cash          !== undefined) document.getElementById('cash').value           = state.cash;
+      if (state.existingCash  !== undefined) document.getElementById('existing-cash').value  = state.existingCash;
+      if (state.feeFixed      !== undefined) document.getElementById('fee-fixed').value      = state.feeFixed;
+      if (state.feePct        !== undefined) document.getElementById('fee-pct').value        = state.feePct;
+      if (state.versionSelect !== undefined) document.getElementById('version-select').value = state.versionSelect;
+      if (state.feeBudget     !== undefined) document.getElementById('fee-budget').value     = state.feeBudget;
+      if (state.overshootTol  !== undefined) document.getElementById('overshoot-tol').value  = state.overshootTol;
+      // Stage 3
+      if (state.fxBase)      { FX_BASE      = state.fxBase; }
+      if (state.fxRates)     { FX_RATES     = state.fxRates; }
+      if (state.fxTimestamp) { FX_TIMESTAMP = state.fxTimestamp; }
+
+      applyVersionUI();
+      updateBaseDisplay();
+      renderSleeveEditor();
+      if (state.holdings && state.holdings.length) {
+        document.getElementById('holdings-body').innerHTML = '';
+        state.holdings.forEach(h => addHoldingRow(h));
+      }
+      renderRateTable();
+      saveState();
+      calc();
+      document.getElementById('api-status').style.color = 'var(--green)';
+      document.getElementById('api-status').textContent = `Imported ${state.holdings?.length||0} holdings from ${state.exported||'file'} (${state.version||'unknown version'}).`;
+      if (FX_TIMESTAMP) {
+        const statusEl = document.getElementById('fx-status');
+        if (statusEl) {
+          statusEl.style.color = 'var(--muted)';
+          statusEl.textContent = `FX rates from export (${new Date(FX_TIMESTAMP).toLocaleString()}). Click ↻ to refresh.`;
+        }
+      }
+    } catch(err) {
+      document.getElementById('api-status').style.color = 'var(--red)';
+      document.getElementById('api-status').textContent = 'Import failed — invalid JSON file.';
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ─── PRICE REFRESH ───
+async function refreshPrices() {
+  const key         = document.getElementById('apikey').value.trim();
+  const providerKey = document.getElementById('provider').value;
+  const provider    = PROVIDERS[providerKey];
+  const btn         = document.getElementById('refresh-btn');
+  const status      = document.getElementById('api-status');
+
+  if (!key) {
+    status.style.color = 'var(--red)';
+    status.textContent = 'No API key — enter prices manually or paste a key.';
+    return;
+  }
+
+  const rows = document.querySelectorAll('#holdings-body tr');
+  btn.innerHTML = '<span class="spinner"></span>Fetching...';
+  btn.disabled = true;
+  let ok = 0, fail = 0;
+
+  for (const tr of rows) {
+    const ticker = tr.querySelector('.h-ticker').value.trim().toUpperCase();
+    if (!ticker) continue;
+    try {
+      const res   = await fetch(provider.url(ticker, key));
+      const data  = await res.json();
+      const price = provider.parse(data);
+      if (price) { tr.querySelector('.h-price').value = price.toFixed(2); ok++; }
+      else { fail++; }
+    } catch(e) { fail++; }
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  btn.textContent = 'Refresh Prices';
+  btn.disabled    = false;
+  status.style.color = fail ? 'var(--gold)' : 'var(--green)';
+  status.textContent = `Updated ${ok} price${ok!==1?'s':''}${fail?`, ${fail} failed`:''}.`;
+  saveState();
+  calc();
+}
+
+// ─── INIT ───
+document.getElementById('cash').addEventListener('input',          () => { saveState(); calcDebounced(); });
+document.getElementById('existing-cash').addEventListener('input', () => { saveState(); calcDebounced(); });
+
+applyVersionUI();
+
+if (!loadState()) {
+  initDefaultSleeves();
+  renderSleeveEditor();
+  updateBaseDisplay();
+  renderRateTable();
+  loadSample();
+  // Auto-fetch rates on first load (no saved state means no cached rates)
+  fetchFxRates();
+} else {
+  applyVersionUI();
+  // If no rates were in storage, auto-fetch
+  if (Object.keys(FX_RATES).length === 0) fetchFxRates();
+}
+
+</script>
+<script>
+// ── Market Ticker Background (div-based, visual only) ──
+(function() {
+  const container = document.getElementById('ticker-bg');
+  if (!container) return;
+
+  const FALLBACK = ['SCHD','DGRW','IAU','PLD','NEE','MA','LIN','AVGO','ABT','WM','CNI','SHW'];
+  const SPEEDS   = [35, 28, 42, 31, 38, 25, 45, 33, 29, 40];
+  const ROW_H    = 44;
+
+  function getItems() {
+    const rows = document.querySelectorAll('#holdings-body tr');
+    const tickers = [];
+    rows.forEach(tr => {
+      const t = tr.querySelector('.h-ticker')?.value?.trim().toUpperCase();
+      if (t) tickers.push(t);
+    });
+    return tickers.length >= 2 ? tickers : FALLBACK;
+  }
+
+  function buildRow(items, rowIndex) {
+    const isUp   = i => (rowIndex * 7 + i * 3) % 5 !== 0;
+    const getPct = i => ((rowIndex * 13 + i * 7) % 61 - 20) / 10;
+    const color  = i => isUp(i) ? 'rgba(46,204,113,0.75)' : 'rgba(231,76,60,0.65)';
+    const segment = items.map((t, i) =>
+      `<span style="color:${color(i)};margin-right:28px;">${t} ${isUp(i)?'+':''}${getPct(i).toFixed(1)}%</span>`
+    ).join('');
+    const div = document.createElement('div');
+    div.className = 'ticker-row';
+    div.style.top = (rowIndex * ROW_H) + 'px';
+    div.style.animationDuration = SPEEDS[rowIndex % SPEEDS.length] + 's';
+    div.style.animationDirection = rowIndex % 2 === 0 ? 'normal' : 'reverse';
+    div.innerHTML = segment + segment;
+    return div;
+  }
+
+  function init() {
+    container.innerHTML = '';
+    const items = getItems();
+    const numRows = Math.ceil(window.innerHeight / ROW_H) + 1;
+    for (let r = 0; r < numRows; r++) container.appendChild(buildRow(items, r));
+  }
+
+  init();
+  window.addEventListener('resize', init);
+  const holdingsEl = document.getElementById('holdings-body');
+  if (holdingsEl) new MutationObserver(init).observe(holdingsEl, { childList: true, subtree: true });
+})();
+</script>
+<script>
+// ── Button spotlight effect (visual only) ──
+(function() {
+  function applySpotlight(btn) {
+    btn.addEventListener('mousemove', e => {
+      const r   = btn.getBoundingClientRect();
+      const x   = ((e.clientX - r.left) / r.width)  * 100;
+      const y   = ((e.clientY - r.top)  / r.height) * 100;
+      btn.style.setProperty('--sx', x + '%');
+      btn.style.setProperty('--sy', y + '%');
+      btn.style.setProperty('--so', '1');
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.setProperty('--so', '0');
+    });
+  }
+
+  // Apply to all current and future buttons via delegation
+  document.querySelectorAll('button').forEach(applySpotlight);
+
+  // MutationObserver for dynamically added buttons (sleeve rows etc.)
+  new MutationObserver(muts => {
+    muts.forEach(m => m.addedNodes.forEach(n => {
+      if (n.nodeType !== 1) return;
+      if (n.tagName === 'BUTTON') applySpotlight(n);
+      n.querySelectorAll && n.querySelectorAll('button').forEach(applySpotlight);
+    }));
+  }).observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+<script>
+// ── (scroll reveal and animated counter removed for performance) ──
+</script>
+<script>
+// ── Sticky header ──
+(function() {
+  const bar    = document.getElementById('sticky-bar');
+  const header = document.querySelector('header');
+  if (!bar || !header) return;
+  const io = new IntersectionObserver(entries => {
+    bar.classList.toggle('visible', !entries[0].isIntersecting);
+  }, { threshold: 0 });
+  io.observe(header);
+})();
+
+// ── Copy ticker on click ──
+(function() {
+  function attachCopy(td) {
+    if (td.dataset.copyAttached) return;
+    td.dataset.copyAttached = '1';
+    td.classList.add('ticker-copy');
+    const tick = document.createElement('span');
+    tick.className = 'copy-tick';
+    tick.textContent = '✓';
+    td.appendChild(tick);
+    td.addEventListener('click', () => {
+      const text = td.childNodes[0]?.textContent?.trim() || td.textContent.trim();
+      navigator.clipboard?.writeText(text).then(() => {
+        tick.classList.add('show');
+        setTimeout(() => tick.classList.remove('show'), 1200);
+      });
+    });
+  }
+
+  // Attach to existing and future ticker cells in breakdown table
+  function scanTickers() {
+    document.querySelectorAll('#ticker-plan-body tr td:first-child').forEach(attachCopy);
+  }
+  scanTickers();
+  new MutationObserver(scanTickers)
+    .observe(document.getElementById('ticker-plan-body') || document.body,
+      { childList: true, subtree: true });
+})();
+
+// ── Ambient panel glow — CSS only, no observer ──
+</script>
+<script>
+// ── Dark/Light mode toggle ──
+function toggleMode() {
+  const isLight = document.body.classList.toggle('light-mode');
+  document.getElementById('mode-toggle').textContent = isLight ? '🌙' : '☀';
+  localStorage.setItem('s2045_mode', isLight ? 'light' : 'dark');
+}
+(function() {
+  if (localStorage.getItem('s2045_mode') === 'light') {
+    document.body.classList.add('light-mode');
+    const btn = document.getElementById('mode-toggle');
+    if (btn) btn.textContent = '🌙';
+  }
+})();
+
+// ── Search/filter holdings ──
+function filterHoldings(query) {
+  const q = query.trim().toUpperCase();
+  document.querySelectorAll('#holdings-body tr').forEach(tr => {
+    const ticker = tr.querySelector('.h-ticker')?.value?.toUpperCase() || '';
+    tr.style.display = (!q || ticker.includes(q)) ? '' : 'none';
+  });
+}
+
+// ── Sort ticker breakdown table ──
+(function() {
+  let sortCol = null, sortDir = 1;
+  document.querySelectorAll('#ticker-plan-body').forEach(() => {}); // ensure exists
+
+  document.addEventListener('click', e => {
+    const th = e.target.closest('th.sortable');
+    if (!th) return;
+    const col = th.dataset.col;
+    if (sortCol === col) sortDir *= -1;
+    else { sortCol = col; sortDir = 1; }
+
+    // Update header indicators
+    document.querySelectorAll('th.sortable').forEach(t => {
+      t.classList.remove('sort-asc','sort-desc');
+    });
+    th.classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+
+    const tbody = document.getElementById('ticker-plan-body');
+    if (!tbody) return;
+    const rows = [...tbody.querySelectorAll('tr')];
+    rows.sort((a, b) => {
+      const getCellVal = (tr) => {
+        const cells = tr.querySelectorAll('td');
+        if (col === 'pct')   return parseFloat(cells[3]?.textContent) || 0;
+        if (col === 'units') return parseFloat(cells[5]?.textContent?.replace(/[^0-9.]/g,'')) || 0;
+        if (col === 'buy')   return parseFloat(cells[6]?.textContent?.replace(/[^0-9.]/g,'')) || 0;
+        return 0;
+      };
+      return (getCellVal(a) - getCellVal(b)) * sortDir;
+    });
+    rows.forEach(r => tbody.appendChild(r));
+  });
+})();
+
+// ── Highlight row on price change ──
+(function() {
+  const observer = new MutationObserver(muts => {
+    muts.forEach(m => {
+      const input = m.target;
+      if (!input.classList?.contains('h-price')) return;
+      const tr = input.closest('tr');
+      if (!tr) return;
+      tr.classList.remove('row-flash');
+      void tr.offsetWidth;
+      tr.classList.add('row-flash');
+    });
+  });
+  function watchPriceInputs() {
+    document.querySelectorAll('.h-price').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const tr = inp.closest('tr');
+        if (!tr) return;
+        tr.classList.remove('row-flash');
+        void tr.offsetWidth;
+        tr.classList.add('row-flash');
+      });
+    });
+  }
+  watchPriceInputs();
+  new MutationObserver(() => watchPriceInputs())
+    .observe(document.getElementById('holdings-body') || document.body, { childList: true });
+})();
+
+// ── Gradient background per sleeve on ticker breakdown rows ──
+(function() {
+  function applySleeveGradients() {
+    document.querySelectorAll('#ticker-plan-body tr').forEach(tr => {
+      const tag = tr.querySelector('.sleeve-tag');
+      if (!tag) return;
+      const color = tag.style.color || '#c9a84c';
+      tr.style.setProperty('--sleeve-bg', color);
+    });
+  }
+  applySleeveGradients();
+  new MutationObserver(applySleeveGradients)
+    .observe(document.getElementById('ticker-plan-body') || document.body,
+      { childList: true, subtree: true });
+})();
+
+// ── Number ticker animation on stat values ──
+(function() {
+  const ids = ['out-current','out-after','out-allocated','out-leftover','out-fees'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    new MutationObserver(() => {
+      el.classList.remove('num-tick');
+      void el.offsetWidth;
+      el.classList.add('num-tick');
+    }).observe(el, { childList: true, characterData: true, subtree: true });
+  });
+})();
+
+// ── Sleeve bar pulse when far from target (>5% gap) ──
+(function() {
+  function applyPulse() {
+    document.querySelectorAll('.sleeve-bar-wrap').forEach(wrap => {
+      const txt = wrap.querySelector('.sleeve-bar-head .pct')?.textContent || '';
+      const m = txt.match(/([\d.]+)%.*target\s*([\d.]+)%/);
+      if (!m) return;
+      const cur = parseFloat(m[1]), tgt = parseFloat(m[2]);
+      const bar = wrap.querySelector('.bar-current');
+      if (!bar) return;
+      if (Math.abs(cur - tgt) > 5) bar.classList.add('bar-pulse');
+      else bar.classList.remove('bar-pulse');
+    });
+  }
+  applyPulse();
+  new MutationObserver(applyPulse)
+    .observe(document.getElementById('sleeve-bars') || document.body,
+      { childList: true, subtree: true });
+})();
+
+// ── Mini sparkline on ticker breakdown rows ──
+(function() {
+  function addSparklines() {
+    document.querySelectorAll('#ticker-plan-body tr').forEach(tr => {
+      if (tr.querySelector('.sparkline')) return;
+      const cells = tr.querySelectorAll('td');
+      const pctCell = cells[3];
+      const maxCell = cells[4];
+      if (!pctCell) return;
+      const cur = parseFloat(pctCell.textContent) || 0;
+      const maxTxt = maxCell?.textContent?.trim() || '';
+      const hasMax = maxTxt && !maxTxt.includes('—');
+      const max = hasMax ? (parseFloat(maxTxt) || 20) : 100;
+      const pct = Math.min(100, (cur / max) * 100);
+      // Red only when has max% AND at/near cap (>90% of max). Blue otherwise.
+      const barColor = (hasMax && pct > 90) ? '#e74c3c' : '#3b82f6';
+      const svg = `<svg class="sparkline" width="36" height="10" viewBox="0 0 36 10">
+        <rect x="0" y="4" width="36" height="2" rx="1" fill="rgba(255,255,255,0.08)"/>
+        <rect x="0" y="4" width="${pct * 0.36}" height="2" rx="1" fill="${barColor}"/>
+      </svg>`;
+      pctCell.insertAdjacentHTML('beforeend', svg);
+    });
+  }
+  addSparklines();
+  new MutationObserver(addSparklines)
+    .observe(document.getElementById('ticker-plan-body') || document.body,
+      { childList: true, subtree: true });
+})();
+
+// ── Last updated timestamp ──
+(function() {
+  const el = document.getElementById('last-updated');
+  function updateTimestamp() {
+    if (el) el.textContent = 'Updated ' + new Date().toLocaleTimeString();
+  }
+  // Patch calc to update timestamp after each run
+  const _origCalc = window.calc;
+  const _obs = new MutationObserver(updateTimestamp);
+  const target = document.getElementById('out-current');
+  if (target) _obs.observe(target, { childList: true, characterData: true, subtree: true });
+})();
+
+// ── Undo (Ctrl+Z) ──
+(function() {
+  const MAX_HISTORY = 20;
+  const history = [];
+  let isUndoing = false;
+
+  function captureState() {
+    if (isUndoing) return;
+    try {
+      const state = localStorage.getItem('salary2045_v3');
+      if (state && (history.length === 0 || history[history.length-1] !== state)) {
+        history.push(state);
+        if (history.length > MAX_HISTORY) history.shift();
+      }
+    } catch(e) {}
+  }
+
+  // Capture on every save
+  const _origSave = window.saveState;
+  window.saveState = function() {
+    captureState();
+    _origSave.apply(this, arguments);
+  };
+
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+      e.preventDefault();
+      if (history.length < 2) return;
+      history.pop(); // discard current
+      const prev = history[history.length - 1];
+      if (!prev) return;
+      isUndoing = true;
+      try {
+        localStorage.setItem('salary2045_v3', prev);
+        const state = JSON.parse(prev);
+        // Restore via existing loadState mechanism
+        if (state.sleeves) {
+          SLEEVES = state.sleeves.map(s => ({...s}));
+          renderSleeveEditor();
+        }
+        if (state.cash !== undefined) document.getElementById('cash').value = state.cash;
+        if (state.existingCash !== undefined) document.getElementById('existing-cash').value = state.existingCash;
+        if (state.holdings) {
+          document.getElementById('holdings-body').innerHTML = '';
+          state.holdings.forEach(h => addHoldingRow(h));
+        }
+        renderRateTable();
+        calc();
+        // Brief visual feedback
+        document.body.style.outline = '2px solid var(--purple)';
+        setTimeout(() => { document.body.style.outline = ''; }, 300);
+      } catch(err) {}
+      isUndoing = false;
+    }
+  });
+
+  // Initial capture
+  setTimeout(captureState, 500);
+})();
+
+// ── Export to CSV ──
+function exportCSV() {
+  const rows = [['Ticker','Sleeve','Curr','Current %','Max %','Units','$ To Buy']];
+  document.querySelectorAll('#ticker-plan-body tr').forEach(tr => {
+    const cells = tr.querySelectorAll('td');
+    if (cells.length < 7) return;
+    rows.push([
+      cells[0].textContent.trim(),
+      cells[1].textContent.trim(),
+      cells[2].textContent.trim(),
+      cells[3].textContent.trim(),
+      cells[4].textContent.trim(),
+      cells[5].textContent.trim(),
+      cells[6].textContent.trim(),
+    ]);
+  });
+  const csv = rows.map(r => r.map(c => `"${c.replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `salary2045_plan_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+</script>
+<script>
+// ── Smooth scroll from Ticker Breakdown sleeve tag to Sleeve Plan ──
+(function() {
+  document.addEventListener('click', e => {
+    const tag = e.target.closest('#ticker-plan-body .sleeve-tag');
+    if (!tag) return;
+    const name = tag.textContent.trim();
+    // Find matching row in plan-body
+    const planRows = document.querySelectorAll('#plan-body tr');
+    for (const tr of planRows) {
+      const planTag = tr.querySelector('.sleeve-tag');
+      if (planTag && planTag.textContent.trim() === name) {
+        tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        tr.style.outline = '2px solid var(--gold)';
+        setTimeout(() => { tr.style.outline = ''; }, 1200);
+        return;
+      }
+    }
+  });
+  // Add pointer cursor hint to ticker breakdown sleeve tags
+  document.addEventListener('mouseover', e => {
+    const tag = e.target.closest('#ticker-plan-body .sleeve-tag');
+    if (tag) tag.style.cursor = 'pointer';
+  });
+})();
+
+// ── Share URL ──
+function shareURL() {
+  try {
+    const state = localStorage.getItem('salary2045_v3') || '{}';
+    const encoded = btoa(encodeURIComponent(state));
+    const url = location.href.split('?')[0] + '?s=' + encoded;
+    navigator.clipboard.writeText(url).then(() => {
+      const toast = document.getElementById('share-toast');
+      if (!toast) return;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    });
+  } catch(e) {
+    alert('Could not generate share link — try Export JSON instead.');
+  }
+}
+
+// Load shared state from URL on startup
+(function() {
+  const params = new URLSearchParams(location.search);
+  const s = params.get('s');
+  if (!s) return;
+  try {
+    const state = JSON.parse(decodeURIComponent(atob(s)));
+    localStorage.setItem('salary2045_v3', JSON.stringify(state));
+    // Clean URL
+    history.replaceState({}, '', location.pathname);
+  } catch(e) {}
+})();
+
+// ── Days since rebalance counter ──
+const REBALANCE_KEY = 's2045_rebalance_date';
+function updateRebalanceCounter() {
+  const el = document.getElementById('rebalance-counter');
+  if (!el) return;
+  const stored = localStorage.getItem(REBALANCE_KEY);
+  if (!stored) {
+    el.innerHTML = '<span style="color:var(--muted);">Click to mark today as your last rebalance date</span>';
+    return;
+  }
+  const last = new Date(stored);
+  const days = Math.floor((Date.now() - last.getTime()) / 86400000);
+  if (days === 0) {
+    el.innerHTML = '✓ Rebalanced <strong>today</strong>';
+  } else {
+    const color = days > 30 ? 'var(--red)' : days > 14 ? 'var(--gold)' : 'var(--green)';
+    el.innerHTML = `Last rebalance: <strong style="color:${color}">${days} day${days!==1?'s':''} ago</strong> · Click to reset`;
+  }
+}
+function resetRebalanceDate() {
+  localStorage.setItem(REBALANCE_KEY, new Date().toISOString());
+  updateRebalanceCounter();
+}
+updateRebalanceCounter();
+
+// ── Empty state ──
+(function() {
+  function checkEmpty() {
+    const tbody = document.getElementById('holdings-body');
+    const empty = document.getElementById('holdings-empty');
+    const search = document.getElementById('holdings-search');
+    if (!tbody || !empty) return;
+    const hasRows = tbody.querySelectorAll('tr').length > 0;
+    empty.style.display = hasRows ? 'none' : 'block';
+    if (search) search.style.display = hasRows ? '' : 'none';
+  }
+  checkEmpty();
+  new MutationObserver(checkEmpty)
+    .observe(document.getElementById('holdings-body') || document.body,
+      { childList: true });
+})();
+
+// ── Onboarding tour ──
+const TOUR_KEY = 's2045_tour_done';
+const TOUR_STEPS = [
+  {
+    selector: '#sleeve-editor',
+    title: 'Target Allocation — Sleeves',
+    text: 'Sleeves are the categories your portfolio is divided into (e.g. Core, Satellite, Hedge). Set a target % for each. They must sum to 100%.'
+  },
+  {
+    selector: '#cash',
+    title: 'Available Cash to Deploy',
+    text: 'Enter how much new money you\'re investing this session. Always in your base currency. This is the amount the tool will allocate across your sleeves.'
+  },
+  {
+    selector: '#existing-cash',
+    title: 'Existing Cash Position',
+    text: 'Cash already sitting in your account. This counts toward the Cash sleeve target — the tool factors it in before deciding how much more to reserve.'
+  },
+  {
+    selector: '#base-currency',
+    title: 'Base Currency',
+    text: 'All portfolio math runs in this currency. Holdings in other currencies are converted automatically using live FX rates from frankfurter.app.'
+  },
+  {
+    selector: '#fee-fixed',
+    title: 'Transaction Fees',
+    text: 'Optional. Enter a fixed fee per trade and/or a % fee. The tool factors fees into the allocation and can cut small trades to stay within a budget (Version B).'
+  },
+  {
+    selector: '#holdings-body',
+    title: 'Your Holdings',
+    text: 'Add each position — ticker symbol, which sleeve it belongs to, how many shares you own, the current price, and currency. Max % caps a position\'s maximum weight.'
+  },
+  {
+    selector: '.stat-grid',
+    title: 'Summary Cards',
+    text: 'After entering your data these cards update instantly — Portfolio Value, After Deploy, Cash Allocated, Cash Left, and Total Fees if applicable.'
+  },
+  {
+    selector: '#sleeve-bars',
+    title: 'Allocation Bars',
+    text: 'Each bar shows your current allocation vs the target marker (white line). The goal: deploy cash until each bar reaches its marker. Over time the portfolio converges without selling.'
+  },
+  {
+    selector: '#plan-body',
+    title: 'Sleeve Plan',
+    text: 'How much to buy per sleeve. Current % is where you are now, After % is where you\'ll be after the trades, Gap shows how far each sleeve is from target.'
+  },
+  {
+    selector: '#ticker-plan-body',
+    title: 'Ticker Breakdown',
+    text: 'The exact buy order — units to purchase and dollar amount per position, in the native currency of each ticker. This is what you execute at your broker. Click any sleeve tag to scroll up to that sleeve in the plan.'
+  },
+];
+
+let _tourStep = 0;
+
+function startTour() {
+  _tourStep = 0;
+  showTourStep();
+}
+
+function showTourStep() {
+  const hl  = document.getElementById('tour-highlight');
+  const bbl = document.getElementById('tour-bubble');
+  if (!hl || !bbl) return;
+
+  if (_tourStep >= TOUR_STEPS.length) { endTour(); return; }
+
+  const step = TOUR_STEPS[_tourStep];
+  const target = document.querySelector(step.selector);
+  if (!target) { _tourStep++; showTourStep(); return; }
+
+  // Hide first to avoid flicker during scroll
+  hl.style.display  = 'none';
+  bbl.style.display = 'none';
+
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  // Wait for scroll to settle, then position
+  setTimeout(() => {
+    const r = target.getBoundingClientRect();
+
+    // Clamp highlight to visible area
+    const hlTop  = Math.max(0, r.top - 8);
+    const hlLeft = Math.max(0, r.left - 8);
+    const hlW    = Math.min(r.width + 16, window.innerWidth - hlLeft);
+    const hlH    = Math.min(r.height + 16, window.innerHeight - hlTop);
+    hl.style.cssText = `display:block;position:fixed;top:${hlTop}px;left:${hlLeft}px;width:${hlW}px;height:${hlH}px;`;
+
+    // Position bubble: always within viewport
+    const bubbleW = 290;
+    const bubbleH = 200;
+    const spaceBelow = window.innerHeight - r.bottom;
+    let top  = spaceBelow > bubbleH + 20 ? r.bottom + 12 : Math.max(8, r.top - bubbleH - 12);
+    let left = Math.max(8, Math.min(r.left, window.innerWidth - bubbleW - 8));
+    // If bubble would overlap highlight badly, pin to bottom of screen
+    if (top < 0) top = window.innerHeight - bubbleH - 16;
+
+    bbl.style.cssText = `display:block;position:fixed;top:${top}px;left:${left}px;width:${bubbleW}px;z-index:1002;`;
+    bbl.innerHTML = `
+      <div class="tour-bubble-title">${step.title}</div>
+      <div class="tour-bubble-text">${step.text}</div>
+      <div class="tour-bubble-nav">
+        <span class="tour-step-count">${_tourStep + 1} / ${TOUR_STEPS.length}</span>
+        <div class="tour-btn-row">
+          <button class="tour-btn skip" onclick="endTour()">Skip</button>
+          ${_tourStep > 0 ? '<button class="tour-btn" onclick="tourBack()">← Back</button>' : ''}
+          <button class="tour-btn" onclick="tourNext()">${_tourStep === TOUR_STEPS.length - 1 ? 'Done ✓' : 'Next →'}</button>
+        </div>
+      </div>`;
+  }, 600);
+}
+
+function tourBack() { _tourStep = Math.max(0, _tourStep - 1); showTourStep(); }
+function tourNext() {
+  if (_tourStep >= TOUR_STEPS.length - 1) { endTour(); return; }
+  _tourStep++;
+  showTourStep();
+}
+
+function endTour() {
+  const hl  = document.getElementById('tour-highlight');
+  const bbl = document.getElementById('tour-bubble');
+  if (hl)  hl.style.display  = 'none';
+  if (bbl) bbl.style.display = 'none';
+  localStorage.setItem(TOUR_KEY, '1');
+}
+
+// Auto-start tour on first visit
+if (!localStorage.getItem(TOUR_KEY)) {
+  setTimeout(startTour, 1200);
+}
+</script>
+<script>
+// ── Multiple Portfolios ──
+const PORTFOLIOS_META_KEY = 's2045_portfolios';
+const MAX_PORTFOLIOS = 5;
+
+function getPortfoliosMeta() {
+  try {
+    const raw = localStorage.getItem(PORTFOLIOS_META_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return [{ id: 'salary2045_v3', name: 'Portfolio 1', active: true }];
+}
+
+function savePortfoliosMeta(meta) {
+  try { localStorage.setItem(PORTFOLIOS_META_KEY, JSON.stringify(meta)); } catch(e) {}
+}
+
+function getActivePortfolio() {
+  const meta = getPortfoliosMeta();
+  return meta.find(p => p.active) || meta[0];
+}
+
+function renderPortfolioBar() {
+  const bar  = document.getElementById('portfolio-bar');
+  if (!bar) return;
+  const meta = getPortfoliosMeta();
+  bar.innerHTML = '';
+
+  meta.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'portfolio-tab' + (p.active ? ' active' : '');
+    btn.textContent = p.name;
+    btn.title = 'Switch to ' + p.name;
+    btn.addEventListener('click', () => switchPortfolio(p.id));
+
+    // Double-click to rename
+    btn.addEventListener('dblclick', e => {
+      e.stopPropagation();
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = p.name;
+      input.className = 'portfolio-rename';
+      input.style.cssText = 'font-family:Inter,sans-serif;font-size:10px;padding:3px 8px;width:110px;border-radius:999px;border:1px solid var(--gold-dim);background:#0d0d14;color:var(--gold);';
+      btn.replaceWith(input);
+      input.focus(); input.select();
+      const commit = () => {
+        const newName = input.value.trim() || p.name;
+        const m = getPortfoliosMeta();
+        const idx = m.findIndex(x => x.id === p.id);
+        if (idx >= 0) { m[idx].name = newName; savePortfoliosMeta(m); }
+        renderPortfolioBar();
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', e2 => { if (e2.key === 'Enter') commit(); if (e2.key === 'Escape') renderPortfolioBar(); });
+    });
+
+    bar.appendChild(btn);
+  });
+
+  // Delete button (only if >1 portfolio)
+  if (meta.length > 1) {
+    const active = meta.find(p => p.active);
+    const del = document.createElement('button');
+    del.className = 'portfolio-tab';
+    del.textContent = '✕';
+    del.title = 'Delete current portfolio';
+    del.style.color = 'var(--red)';
+    del.addEventListener('click', () => deleteCurrentPortfolio());
+    bar.appendChild(del);
+  }
+
+  // Add button (if <MAX)
+  if (meta.length < MAX_PORTFOLIOS) {
+    const add = document.createElement('button');
+    add.className = 'portfolio-tab add-tab';
+    add.textContent = '+ New';
+    add.title = 'Create new portfolio';
+    add.addEventListener('click', addPortfolio);
+    bar.appendChild(add);
+  }
+}
+
+function switchPortfolio(id) {
+  if (window._activePortfolioKey === id) return;
+
+  const container = document.querySelector('.container');
+
+  // Phase 1: fade out
+  container.classList.add('portfolio-out');
+
+  setTimeout(() => {
+    container.classList.remove('portfolio-out');
+
+    // Save current state
+    saveState();
+
+    const meta = getPortfoliosMeta();
+    meta.forEach(p => p.active = (p.id === id));
+    savePortfoliosMeta(meta);
+
+    const newMeta = meta.find(p => p.id === id);
+    if (!newMeta) return;
+
+    window._activePortfolioKey = id;
+
+    document.getElementById('holdings-body').innerHTML = '';
+    if (!loadPortfolioState(id)) {
+      initDefaultSleeves();
+      renderSleeveEditor();
+      document.getElementById('cash').value = '2000';
+      document.getElementById('existing-cash').value = '500';
+      updateBaseDisplay();
+      renderRateTable();
+      calc();
+    }
+    renderPortfolioBar();
+
+    // Phase 2: fade in
+    container.classList.add('portfolio-in');
+    setTimeout(() => container.classList.remove('portfolio-in'), 300);
+
+  }, 200);
+}
+
+function addPortfolio() {
+  const meta = getPortfoliosMeta();
+  if (meta.length >= MAX_PORTFOLIOS) return;
+  const id   = 'salary2045_p' + Date.now();
+  const name = 'Portfolio ' + (meta.length + 1);
+  meta.forEach(p => p.active = false);
+  meta.push({ id, name, active: true });
+  savePortfoliosMeta(meta);
+  window._activePortfolioKey = id;
+  // Reset to defaults for new portfolio
+  document.getElementById('holdings-body').innerHTML = '';
+  initDefaultSleeves();
+  renderSleeveEditor();
+  document.getElementById('cash').value = '2000';
+  document.getElementById('existing-cash').value = '500';
+  FX_BASE = 'USD'; FX_RATES = {}; FX_TIMESTAMP = null;
+  updateBaseDisplay();
+  renderRateTable();
+  calc();
+  renderPortfolioBar();
+}
+
+function deleteCurrentPortfolio() {
+  const meta = getPortfoliosMeta();
+  if (meta.length <= 1) return;
+  const active = meta.find(p => p.active);
+  if (!active) return;
+  if (!confirm(`Delete "${active.name}"? This cannot be undone.`)) return;
+  try { localStorage.removeItem(active.id); } catch(e) {}
+  const idx = meta.findIndex(p => p.id === active.id);
+  meta.splice(idx, 1);
+  meta[Math.max(0, idx - 1)].active = true;
+  savePortfoliosMeta(meta);
+  const newActive = meta.find(p => p.active);
+  window._activePortfolioKey = newActive.id;
+  document.getElementById('holdings-body').innerHTML = '';
+  if (!loadPortfolioState(newActive.id)) {
+    initDefaultSleeves(); renderSleeveEditor(); calc();
+  }
+  renderPortfolioBar();
+}
+
+function loadPortfolioState(id) {
+  try {
+    const raw = localStorage.getItem(id);
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    if (state.sleeves && state.sleeves.length) {
+      SLEEVES = state.sleeves.map(s => ({...s}));
+      SLEEVES.forEach(s => { const n=parseInt(s.key.replace('sl_','')); if (!isNaN(n)&&n>_sleeveCounter) _sleeveCounter=n; });
+    }
+    if (state.cash          !== undefined) document.getElementById('cash').value           = state.cash;
+    if (state.existingCash  !== undefined) document.getElementById('existing-cash').value  = state.existingCash;
+    if (state.feeFixed      !== undefined) document.getElementById('fee-fixed').value      = state.feeFixed;
+    if (state.feePct        !== undefined) document.getElementById('fee-pct').value        = state.feePct;
+    if (state.versionSelect !== undefined) document.getElementById('version-select').value = state.versionSelect;
+    if (state.feeBudget     !== undefined) document.getElementById('fee-budget').value     = state.feeBudget;
+    if (state.overshootTol  !== undefined) document.getElementById('overshoot-tol').value  = state.overshootTol;
+    if (state.fxBase)      { FX_BASE      = state.fxBase; }
+    if (state.fxRates)     { FX_RATES     = state.fxRates; }
+    if (state.fxTimestamp) { FX_TIMESTAMP = state.fxTimestamp; }
+    applyVersionUI();
+    updateBaseDisplay();
+    renderSleeveEditor();
+    if (state.holdings && state.holdings.length) {
+      document.getElementById('holdings-body').innerHTML = '';
+      state.holdings.forEach(h => addHoldingRow(h));
+      renderRateTable();
+    }
+    calc();
+    return true;
+  } catch(e) { return false; }
+}
+
+// Patch saveState to use active portfolio key
+const _origSaveState = window.saveState;
+window.saveState = function() {
+  // If multi-portfolio is active, save to the correct key
+  if (window._activePortfolioKey && window._activePortfolioKey !== 'salary2045_v3') {
+    const holdings = [];
+    document.querySelectorAll('#holdings-body tr').forEach(tr => {
+      const ticker = tr.querySelector('.h-ticker')?.value?.trim().toUpperCase();
+      if (!ticker) return;
+      holdings.push({
+        ticker, sleeveKey: tr.querySelector('.h-sleeve')?.value,
+        shares: tr.querySelector('.h-shares')?.value,
+        price:  tr.querySelector('.h-price')?.value,
+        maxPct: tr.querySelector('.h-maxpct')?.value,
+        fractionable: tr.querySelector('.h-frac')?.checked,
+        currency: tr.querySelector('.h-currency')?.value?.trim().toUpperCase() || FX_BASE,
+      });
+    });
+    const state = {
+      sleeves: SLEEVES.map(s=>({key:s.key,name:s.name,color:s.color,target:s.target,isCash:s.isCash})),
+      holdings,
+      cash:          document.getElementById('cash')?.value,
+      existingCash:  document.getElementById('existing-cash')?.value,
+      feeFixed:      document.getElementById('fee-fixed')?.value,
+      feePct:        document.getElementById('fee-pct')?.value,
+      versionSelect: document.getElementById('version-select')?.value,
+      feeBudget:     document.getElementById('fee-budget')?.value,
+      overshootTol:  document.getElementById('overshoot-tol')?.value,
+      fxBase: FX_BASE, fxRates: FX_RATES, fxTimestamp: FX_TIMESTAMP,
+    };
+    try {
+      localStorage.setItem(window._activePortfolioKey, JSON.stringify(state));
+      const dot = document.getElementById('autosave-dot');
+      if (dot) { dot.classList.add('show'); clearTimeout(dot._timer); dot._timer = setTimeout(()=>dot.classList.remove('show'),1800); }
+    } catch(e) {}
+    return;
+  }
+  _origSaveState.apply(this, arguments);
+};
+
+// Init portfolio bar on load
+(function() {
+  const meta = getPortfoliosMeta();
+  const active = meta.find(p => p.active) || meta[0];
+  window._activePortfolioKey = active?.id;
+  renderPortfolioBar();
+})();
+</script>
+</body>
+</html>
